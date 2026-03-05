@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agentic AI Automation Mapping</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #1a1a2e; }
+
+  /* Header */
+  .hero {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    color: white; padding: 48px 40px 36px;
+  }
+  .hero-tag { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: #e94560; font-weight: 700; margin-bottom: 12px; }
+  .hero h1 { font-size: 32px; font-weight: 800; line-height: 1.2; margin-bottom: 10px; }
+  .hero p { font-size: 15px; color: #a8b2d8; max-width: 720px; line-height: 1.6; }
+  .hero-meta { display: flex; gap: 32px; margin-top: 24px; flex-wrap: wrap; }
+  .hero-meta span { font-size: 12px; color: #64748b; }
+  .hero-meta strong { color: #e2e8f0; display: block; font-size: 14px; }
+
+  /* Nav tabs */
+  .nav { background: #16213e; display: flex; gap: 4px; padding: 0 40px; overflow-x: auto; border-bottom: 1px solid #0f3460; }
+  .nav button {
+    background: none; border: none; color: #94a3b8; padding: 14px 20px;
+    font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap;
+    border-bottom: 3px solid transparent; transition: all 0.2s;
+  }
+  .nav button:hover { color: #e2e8f0; }
+  .nav button.active { color: #e94560; border-bottom-color: #e94560; }
+
+  /* Main content */
+  .content { padding: 32px 40px; max-width: 1400px; margin: 0 auto; }
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* Summary cards */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+  .card {
+    background: white; border-radius: 12px; padding: 20px;
+    border-left: 4px solid #e94560; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .card.blue { border-left-color: #3b82f6; }
+  .card.green { border-left-color: #10b981; }
+  .card.purple { border-left-color: #8b5cf6; }
+  .card.orange { border-left-color: #f59e0b; }
+  .card-num { font-size: 36px; font-weight: 800; color: #1a1a2e; }
+  .card-label { font-size: 12px; color: #64748b; margin-top: 4px; font-weight: 500; }
+
+  /* Legend */
+  .legend { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 24px; background: white; padding: 16px 20px; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 500; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
+    white-space: nowrap;
+  }
+  .badge.single { background: #dbeafe; color: #1d4ed8; }
+  .badge.multi { background: #ede9fe; color: #6d28d9; }
+  .badge.rpa { background: #d1fae5; color: #065f46; }
+  .badge.human { background: #fef3c7; color: #92400e; }
+  .badge.high { background: #fee2e2; color: #991b1b; }
+  .badge.medium { background: #fef9c3; color: #854d0e; }
+  .badge.low { background: #f0fdf4; color: #166534; }
+
+  /* Process table */
+  .proc-section { margin-bottom: 40px; }
+  .proc-header {
+    background: linear-gradient(135deg, #1a1a2e, #0f3460);
+    color: white; padding: 14px 20px; border-radius: 10px 10px 0 0;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .proc-header h3 { font-size: 15px; font-weight: 700; }
+  .proc-header .brd-ref { font-size: 11px; color: #94a3b8; }
+  .proc-table { width: 100%; border-collapse: collapse; background: white; border-radius: 0 0 10px 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .proc-table th { background: #f8fafc; padding: 11px 14px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; text-align: left; border-bottom: 1px solid #e2e8f0; }
+  .proc-table td { padding: 13px 14px; font-size: 13px; vertical-align: top; border-bottom: 1px solid #f1f5f9; line-height: 1.5; }
+  .proc-table tr:last-child td { border-bottom: none; }
+  .proc-table tr:hover td { background: #f8fafc; }
+  .step-num { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; background: #e94560; color: white; border-radius: 50%; font-size: 10px; font-weight: 700; margin-right: 8px; flex-shrink: 0; }
+  .agent-name { font-weight: 600; color: #1a1a2e; font-size: 12px; }
+  .agent-desc { color: #64748b; font-size: 12px; margin-top: 2px; }
+  .tools-list { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+  .tool-tag { background: #f1f5f9; color: #475569; padding: 2px 7px; border-radius: 4px; font-size: 10px; font-weight: 500; }
+  .human-action { color: #92400e; font-size: 12px; font-style: italic; }
+  .impact-bar { height: 6px; border-radius: 3px; margin-top: 4px; }
+  .impact-high { background: #ef4444; width: 100%; }
+  .impact-med { background: #f59e0b; width: 65%; }
+  .impact-low { background: #10b981; width: 35%; }
+  .section-intro { background: white; border-radius: 10px; padding: 20px; margin-bottom: 24px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); border-left: 4px solid #3b82f6; font-size: 14px; line-height: 1.7; color: #374151; }
+
+  /* Architecture view */
+  .arch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .arch-grid { grid-template-columns: 1fr; } }
+  .arch-card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .arch-card h4 { font-size: 15px; font-weight: 700; margin-bottom: 4px; color: #1a1a2e; }
+  .arch-card p { font-size: 13px; color: #64748b; margin-bottom: 16px; }
+  .agent-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; }
+  .agent-box-title { font-size: 13px; font-weight: 700; color: #1a1a2e; display: flex; align-items: center; gap: 8px; }
+  .agent-box-desc { font-size: 12px; color: #64748b; margin-top: 4px; }
+  .agent-box-tools { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .dot-blue { background: #3b82f6; }
+  .dot-purple { background: #8b5cf6; }
+  .dot-green { background: #10b981; }
+  .dot-red { background: #e94560; }
+
+  /* Roadmap */
+  .roadmap { display: flex; flex-direction: column; gap: 24px; }
+  .phase-block { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .phase-header { padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
+  .phase-header.p1 { background: linear-gradient(135deg, #1d4ed8, #3b82f6); color: white; }
+  .phase-header.p2 { background: linear-gradient(135deg, #6d28d9, #8b5cf6); color: white; }
+  .phase-header.p3 { background: linear-gradient(135deg, #065f46, #10b981); color: white; }
+  .phase-header h4 { font-size: 16px; font-weight: 700; }
+  .phase-header span { font-size: 12px; opacity: 0.85; }
+  .phase-body { padding: 20px 24px; }
+  .phase-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+  .phase-item { background: #f8fafc; border-radius: 8px; padding: 12px 14px; border-left: 3px solid #e2e8f0; }
+  .phase-item.p1 { border-left-color: #3b82f6; }
+  .phase-item.p2 { border-left-color: #8b5cf6; }
+  .phase-item.p3 { border-left-color: #10b981; }
+  .phase-item-title { font-size: 13px; font-weight: 600; color: #1a1a2e; }
+  .phase-item-desc { font-size: 12px; color: #64748b; margin-top: 3px; }
+
+  /* Principles */
+  .principles-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .principle-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .principle-icon { font-size: 28px; margin-bottom: 10px; }
+  .principle-card h4 { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+  .principle-card p { font-size: 13px; color: #64748b; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-tag">AI Strategy Document</div>
+  <h1>Agentic AI Automation Mapping<br>Talent Acquisition & Onboarding System</h1>
+  <p>A structured mapping of single-agent, multi-agent workflows, and intelligent automation opportunities to the business requirements defined in the TA & Onboarding System BRD v1.0.</p>
+  <div class="hero-meta">
+    <div><strong>Source Document</strong><span>BRD v1.0 — May 2025</span></div>
+    <div><strong>Coverage</strong><span>Sections 2.1 – 2.8 + NFRs</span></div>
+    <div><strong>Automation Patterns</strong><span>Single Agent · Multi-Agent · RPA-style · Human-in-Loop</span></div>
+    <div><strong>Status</strong><span>Strategy Draft</span></div>
+  </div>
+</div>
+
+<div class="nav">
+  <button class="active" onclick="showSection('overview')">📊 Overview</button>
+  <button onclick="showSection('vacancy')">📋 Vacancy Workflow</button>
+  <button onclick="showSection('sourcing')">🔍 Sourcing & Shortlisting</button>
+  <button onclick="showSection('interview')">🎤 Interview & Feedback</button>
+  <button onclick="showSection('offer')">💼 Offer Management</button>
+  <button onclick="showSection('onboarding')">🚀 Onboarding</button>
+  <button onclick="showSection('agency')">🤝 Agency Management</button>
+  <button onclick="showSection('reporting')">📈 Reporting & KPIs</button>
+  <button onclick="showSection('architecture')">🏗️ Architecture</button>
+  <button onclick="showSection('roadmap')">🗺️ AI Roadmap</button>
+</div>
+
+<!-- OVERVIEW -->
+<div id="overview" class="section active">
+  <div class="content">
+    <div class="cards">
+      <div class="card"><div class="card-num">23</div><div class="card-label">Automation Opportunities Identified</div></div>
+      <div class="card blue"><div class="card-num">8</div><div class="card-label">Single Agent Workflows</div></div>
+      <div class="card purple"><div class="card-num">6</div><div class="card-label">Multi-Agent Orchestrations</div></div>
+      <div class="card green"><div class="card-num">9</div><div class="card-label">Agentic Automation Tasks</div></div>
+      <div class="card orange"><div class="card-num">12</div><div class="card-label">Human-in-Loop Checkpoints</div></div>
+    </div>
+
+    <div class="legend">
+      <div class="legend-item"><span class="badge single">Single Agent</span> One AI agent handles the entire sub-process</div>
+      <div class="legend-item"><span class="badge multi">Multi-Agent</span> Orchestrator delegates to specialist sub-agents</div>
+      <div class="legend-item"><span class="badge rpa">Automation</span> Rule-based / deterministic automation (no AI reasoning)</div>
+      <div class="legend-item"><span class="badge human">Human Gate</span> Mandatory human decision point</div>
+      <div class="legend-item"><span class="badge high">High Impact</span> <span class="badge medium">Medium</span> <span class="badge low">Low</span> Automation impact rating</div>
+    </div>
+
+    <div class="section-intro">
+      <strong>How to read this document:</strong> Each BRD process section (2.1–2.8) is mapped to the most appropriate AI automation pattern. The mapping identifies: (1) which process steps can be fully automated, (2) which require an AI agent acting autonomously with tool use, (3) which require multi-agent coordination, and (4) where human approval gates must remain. The goal is to augment—not replace—human judgment for consequential decisions while maximising efficiency on repetitive, rules-based, or information-intensive tasks.
+    </div>
+
+    <div class="proc-section">
+      <div class="proc-header">
+        <h3>Automation Opportunity Summary by BRD Section</h3>
+        <span class="brd-ref">All Sections · High-Level View</span>
+      </div>
+      <table class="proc-table">
+        <thead>
+          <tr>
+            <th>BRD Section</th>
+            <th>Process</th>
+            <th>Primary AI Pattern</th>
+            <th>Key Agent(s)</th>
+            <th>Human Gates</th>
+            <th>Impact</th>
+            <th>Effort</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>2.1</strong></td>
+            <td>Vacancy Request & Approval</td>
+            <td><span class="badge single">Single Agent</span></td>
+            <td>Vacancy Intelligence Agent</td>
+            <td>HRBP, OD, TA Director approval</td>
+            <td><span class="badge high">High</span></td>
+            <td><span class="badge medium">Medium</span></td>
+          </tr>
+          <tr>
+            <td><strong>2.2</strong></td>
+            <td>Candidate Sourcing & Shortlisting</td>
+            <td><span class="badge multi">Multi-Agent</span></td>
+            <td>Sourcing Orchestrator + Screening Agent + Ranking Agent</td>
+            <td>HM shortlist review & decision</td>
+            <td><span class="badge high">High</span></td>
+            <td><span class="badge high">High</span></td>
+          </tr>
+          <tr>
+            <td><strong>2.3</strong></td>
+            <td>Interview Scheduling & Feedback</td>
+            <td><span class="badge single">Single Agent</span></td>
+            <td>Interview Coordination Agent</td>
+            <td>Interviewer feedback submission</td>
+            <td><span class="badge high">High</span></td>
+            <td><span class="badge medium">Medium</span></td>
+          </tr>
+          <tr>
+            <td><strong>2.4</strong></td>
+            <td>Offer Request, Approval & Validation</td>
+            <td><span class="badge single">Single Agent</span></td>
+            <td>Offer Intelligence Agent</td>
+            <td>OD review, CPO final approval</td>
+            <td><span class="badge high">High</span></td>
+            <td><span class="badge medium">Medium</span></td>
+          </tr>
+          <tr>
+            <td><strong>2.5</strong></td>
+            <td>Contract Issuance & Acceptance</td>
+            <td><span class="badge rpa">Automation</span></td>
+            <td>Contract Generation Agent</td>
+            <td>CPO/HR GM digital signature</td>
+            <td><span class="badge high">High</span></td>
+            <td><span class="badge low">Low</span></td>
+          </tr>
+          <tr>
+            <td><strong>2.6</strong></td>
+            <td>Onboarding Collaboration</td>
+            <td><span class="badge multi">Multi-Agent</span></td>
+            <td>Onboarding Orchestrator + 5 Team Sub-Agents</td>
+            <td>Recruiter initiation, team task completions</td>
+            <td><span class="badge high">High</span></td>
+            <td><span class="badge high">High</span></td>
+          </tr>
+          <tr>
+            <td><strong>2.7</strong></td>
+            <td>Candidate Portal & Job Posting</td>
+            <td><span class="badge single">Single Agent</span></td>
+            <td>Candidate Experience Agent</td>
+            <td>None (candidate self-service)</td>
+            <td><span class="badge medium">Medium</span></td>
+            <td><span class="badge low">Low</span></td>
+          </tr>
+          <tr>
+            <td><strong>2.8</strong></td>
+            <td>Agency Management & Invoicing</td>
+            <td><span class="badge single">Single Agent</span></td>
+            <td>Agency Compliance Agent</td>
+            <td>TA Director + Finance approval</td>
+            <td><span class="badge medium">Medium</span></td>
+            <td><span class="badge low">Low</span></td>
+          </tr>
+          <tr>
+            <td><strong>4.2–4.3</strong></td>
+            <td>KPI Monitoring & Reporting</td>
+            <td><span class="badge multi">Multi-Agent</span></td>
+            <td>Analytics Orchestrator + Alert Agent + Report Agent</td>
+            <td>TA Director review of breach alerts</td>
+            <td><span class="badge high">High</span></td>
+            <td><span class="badge medium">Medium</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- VACANCY -->
+<div id="vacancy" class="section">
+  <div class="content">
+    <div class="section-intro">
+      <strong>BRD Section 2.1 — Vacancy Request and Approval Workflow.</strong> This process is highly amenable to a single intelligent agent that can pre-validate submissions, route intelligently, chase approvers, and surface anomalies — while keeping all approval decisions firmly with humans. The agent operates as an autonomous workflow manager with read/write access to the vacancy record, calendar systems, and notification services.
+    </div>
+    <div class="proc-section">
+      <div class="proc-header">
+        <h3>Vacancy Intelligence Agent — Step-by-Step Mapping</h3>
+        <span class="brd-ref">BRD §2.1 · Pattern: Single Agent</span>
+      </div>
+      <table class="proc-table">
+        <thead>
+          <tr><th>BRD Step</th><th>Process Step</th><th>AI Automation Action</th><th>Agent Tools Used</th><th>Human Gate?</th><th>Impact</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="step-num">1</span></td>
+            <td>Initiation of vacancy request</td>
+            <td>
+              <div class="agent-name">Smart Form Prefill Agent</div>
+              <div class="agent-desc">Agent reads initiator's HR profile, recent org changes, and similar historical vacancies to pre-populate Job Title, Grade, Division, and suggest a justification template. Flags if a similar open vacancy already exists to prevent duplication.</div>
+            </td>
+            <td><div class="tools-list"><span class="tool-tag">HR Profile API</span><span class="tool-tag">Vacancy DB Lookup</span><span class="tool-tag">LLM Form Assist</span></div></td>
+            <td><span class="badge human">Human Submits</span></td>
+            <td><span class="badge high">High</span></td>
+          </tr>
+          <tr>
+            <td><span class="step-num">2</span></td>
+            <td>Mandatory data capture validation</td>
+            <td>
+              <div class="agent-name">Pre-Submission Validator</div>
+              <div class="agent-desc">Before routing, agent validates all mandatory fields are present and coherent (e.g., grade matches division norms, justification is substantive > 50 words, recommended candidate CV is attached if toggle is on). Blocks submission with specific remediation guidance if checks fail.</div>
+            </td>
+            <td><div class="tools-list"><span class="tool-tag">Validation Rules Engine</span><span class="tool-tag">LLM Quality Check</span></div></td>
+            <td><span class="badge human">Corrects & Resubmits</span></td>
+            <td><span class="badge medium">Medium</span></td>
+          </tr>
+          <tr>
+            <td><span class="step-num">3</span></td>
+            <td>Automated approval routing (HRBP → OD → TA Director)</td>
+            <td>
+              <div class="agent-name">Routing & Chase Agent</div>
+              <div class="agent-desc">Agent determines correct HRBP based on division/entity mapping, routes sequentially. Monitors SLA clock per approver. Sends escalating reminders (Day 1: info, Day 2: nudge, Day 3: escalation to manager). Logs every action with timestamp for audit trail. Handles OLA breach notifications automatically.</div>
+            </td>
+            <td><div class="tools-list"><span class="tool-tag">Workflow Engine</span><span class="tool-tag">Email/Notification API</span><span class="tool-tag">OLA Timer</span><span class="tool-tag">Escalation Matrix</span></div></td>
+            <td><span class="badge human">Each Approver Decides</span></td>
+            <td><span class="badge high">High</span></td>
+          </tr>
+          <tr>
+            <td><span class="step-num">4</span></td>
+            <td>Status tracking & audit history</td>
+            <td>
+              <div class="agent-name">Audit Logger (Automated)</div>
+              <div class="agent-desc">Every state transition is automatically logged with actor ID, timestamp, decision, and comments. Agent generates a real-time status summary accessible to the requester at any point, eliminating the need for manual status inquiries.</div>
+            </td>
+            <td><div class="tools-list"><span class="tool-tag">Audit Log API</span><span class="tool-tag">Status Dashboard</span></div></td>
+            <td>No</td>
+            <td><span class="badge medium">Medium</span></td>
+          </tr>
+          <tr>
+            <td><span class="step-num">5</span></td>
+            <td>Recruiter assignment</td>
+            <td>
+              <div class="agent-name">Workload Balancing Agent</div>
+              <div class="agent-desc">Upon full approval, agent presents TA Director with a recommended recruiter assignment based on: current open vacancy load per recruiter, historical performance on similar roles/grades, and entity/country expertise. TA Director confirms or overrides.</div>
+            </td>
+            <td><div class="tools-list"><span class="tool-tag">Recruiter Workload API</span><span class="tool-tag">Historical Performance DB</span><span class="tool-tag">LLM Recommendation</span></div></td>
+            <td><span class="badge human">TA Director Assigns</span></td>
+            <td><span class="badge medium">Medium</span></td>
+          </tr>
+          <tr>
+            <td><span class="step-num">6</span></td>
+            <td>Intake meeting scheduling</td>
+            <td>
+              <div class="agent-name">Calendar Coordination Agent</div>
+              <div class="agent-desc">Agent checks Outlook availability for both Recruiter and HM, proposes 3 optimal meeting slots within 48 hours, sends invites automatically upon slot selection. Attaches the approved vacancy brief to the calendar event. Logs meeting confirmation in the system.</div>
+            </td>
+            <td><div class="tools-list"><span class="tool-tag">MS Outlook API</span><span class="tool-tag">MS Bookings</span><span class="tool-tag">Calendar Checker</span></div></td>
+            <td><span class="badge human">HM/Recruiter Select Slot</span></td>
+            <td><span class="badge high">High</span></td>
+          </tr>
+          <tr>
+            <td><span class="step-num">7</span></td>
+            <td>Sourcing activation gate</td>
+            <td>
+              <div class="agent-name">Gate Confirmation Monitor</div>
+              <div class="agent-desc">Agent monitors for HM confirmation that intake is complete. If not confirmed within the OLA window post-meeting, agent sends reminders and escalates. Upon confirmation, agent automatically sets vacancy status to 'Active' and notifies Recruiter to begin sourcing.</div>
+            </td>
+            <td><div class="tools-list"><span class="tool-tag">OLA Timer</span><span class="tool-tag">Status Update API</span><span class="tool-tag">Notification Service</span></div></td>
+            <td><span class="badge human">HM Confirms</span></td>
+            <td><span class="badge medium">Medium</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- SOURCING -->
+<div id="sourcing" class="section">
+  <div class="content">
+    <div class="section-intro">
+      <strong>BRD Section 2.2 — Candidate Sourcing and Shortlisting.</strong> This is the highest-value AI automation opportunity in the entire BRD. A multi-agent architecture is recommended: an Orchestrator Agent coordinates a Sourcing Sub-Agent, a CV Screening Sub-Agent, and a Ranking/Shortlist Sub-Agent. Each operates with defined tools and scoped responsibilities. Human judgment is preserved at the final shortlist approval gate.
+    </div>
+    <div class="proc-section">
+      <div class="proc-header">
+        <h3>Sourcing Orchestrator + Specialist Sub-Agents — Step-by-Step Mapping</h3>
+        <span class="brd-ref">BRD §2.2 · Pattern: Multi-Agent</span>
+      </div>
+      <table class="proc-table">
+        <thead>
+          <tr><th>BRD Step</th><th>Process Step</th><th>AI Automation Action</th><th>Agent / Sub-Agent</th><th>Tools Used</th><th>Human Gate?</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="step-num">1</span></td>
+            <td>Candidate entry from multiple sources</td>
+            <td>Multi-source ingestion: agent parses CVs from agency portal, LinkedIn RSC, career page applications, and referrals. Auto-deduplication checks against existing candidate pool. Referral linkage is automated — referrer ID captured and recruiter notified instantly.</td>
+            <td>
+              <div class="agent-name">🤖 Ingestion Sub-Agent</div>
+              <div class="agent-desc">Orchestrated by Sourcing Orchestrator</div>
+            </td>
+            <td><div class="tools-list"><span class="tool-tag">CV Parser API</span><span class="tool-tag">LinkedIn RSC</span><span class="tool-tag">Career Page API</span><span class="tool-tag">Deduplication Engine</span></div></td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td><span class="step-num">2</span></td>
+            <td>Candidate data capture (company/country specific)</td>
+            <td>Agent automatically maps extracted CV data to the correct country/company schema. Missing mandatory fields trigger a targeted candidate-facing prompt via the portal, specifying exactly what is needed. No blanket "please complete your profile" messages.</td>
+            <td>
+              <div class="agent-name">🤖 Data Normalisation Sub-Agent</div>
+            </td>
+            <td><div class="tools-list"><span class="tool-tag">Entity Schema API</span><span class="tool-tag">LLM Field Mapper</span><span class="tool-tag">Candidate Portal API</span></div></td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td><span class="step-num">3</span></td>
+            <td>Initial screening against vacancy requirements</td>
+            <td>Agent reads the intake meeting notes, job description, and competency requirements. Scores each candidate against defined criteria (experience, skills, qualifications, location) using structured rubric. Generates a screening scorecard with evidence citations from the CV. Flags any edge cases for human review.</td>
+            <td>
+              <div class="agent-name">🤖 Screening Sub-Agent</div>
+              <div class="agent-desc">LLM-powered, rubric-grounded</div>
+            </td>
+            <td><div class="tools-list"><span class="tool-tag">LLM Reasoner</span><span class="tool-tag">Job Requirement DB</span><span class="tool-tag">Screening Rubric Engine</span></div></td>
+            <td>No (Recruiter reviews scores)</td>
+          </tr>
+          <tr>
+            <td><span class="step-num">4</span></td>
+            <td>Shortlist creation & HM notification</td>
+            <td>Ranking Sub-Agent sorts screened candidates, applies diversity and source-balance checks, and produces a ranked shortlist. Recruiter reviews and finalises (human confirmation required). System then auto-notifies HM with a structured shortlist summary including scores and CV links.</td>
+            <td>
+              <div class="agent-name">🤖 Ranking Sub-Agent</div>
+            </td>
+            <td><div class="tools-list"><span class="tool-tag">Ranking Algorithm</span><span class="tool-tag">Notification Service</span><span class="tool-tag">Shortlist UI Generator</span></div></td>
+            <td><span class="badge human">Recruiter Finalises Shortlist</span></td>
+          </tr>
+          <tr>
+            <td><span class="step-num">5</span></td>
+            <td>Hiring Manager shortlist review</td>
+            <td>Agent prepares a structured HM review package — one-page candidate summaries, screening rationale, and side-by-side comparison view. HM interacts via portal; agent captures Accept/Reject decisions in real time and updates candidate statuses immediately.</td>
+            <td>
+              <div class="agent-name">🤖 HM Briefing Agent</div>
+            </td>
+            <td><div class="tools-list"><span class="tool-tag">LLM Summary Generator</span><span class="tool-tag">Candidate Profile API</span><span class="tool-tag">Portal UI</span></div></td>
+            <td><span class="badge human">HM Decides Accept/Reject</span></td>
+          </tr>
+          <tr>
+            <td><span class="step-num">6</span></td>
+            <td>Workflow logic: all rejected → new shortlist / accepted → interviews</td>
+            <td>Agent automatically enforces the 3-iteration rule. Tracks iteration count. If iteration 3 is exhausted with all rejections, agent flags the vacancy for re-initiation from intake meeting step and notifies TA Director with a summary of all rejected candidates and HM comments as context for the intake re-run.</td>
+            <td>
+              <div class="agent-name">🤖 Workflow Logic Agent (Orchestrator)</div>
+            </td>
+            <td><div class="tools-list"><span class="tool-tag">Iteration Counter</span><span class="tool-tag">Workflow Engine</span><span class="tool-tag">Escalation Trigger</span></div></td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td><span class="step-num">7</span></td>
+            <td>Candidate ranking by HM preference</td>
+            <td>Agent captures HM ranking input and stores preference order. Uses this to sequence interview scheduling — highest-ranked candidate gets first available slot. If candidate 1 drops out, agent automatically advances candidate 2 without manual intervention.</td>
+            <td>
+              <div class="agent-name">🤖 Ranking & Sequencing Agent</div>
+            </td>
+            <td><div class="tools-list"><span class="tool-tag">Preference Capture UI</span><span class="tool-tag">Interview Scheduler API</span></div></td>
+            <td><span class="badge human">HM Sets Ranking</span></td>
+          </tr>
+          <tr>
+            <td><span class="step-num">8</span></td>
+            <td>Automated regret notifications</td>
+            <td>Agent generates personalised (not generic) regret emails, customised by level, company, and country. Scheduled for next business day 9 AM per BRD spec. Candidate portal access automatically downgraded to read-only upon final rejection. All triggered without recruiter manual action.</td>
+            <td>
+              <div class="agent-name">🤖 Candidate Comms Agent</div>
+            </td>
+            <td><div class="tools-list"><span class="tool-tag">LLM Email Writer</span><span class="tool-tag">Scheduled Notification</span><span class="tool-tag">Portal Access API</span><span class="tool-tag">Company/Country Template Engine</span></div></td>
+            <td>No</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- INTERVIEW -->
+<div id="interview" class="section">
+  <div class="content">
+    <div class="section-intro">
+      <strong>BRD Section 2.3 — Interview Scheduling and Feedback Management.</strong> A single Interview Coordination Agent handles the full lifecycle of interview logistics and feedback chase — one of the most time-consuming manual activities in TA. The agent integrates deeply with Outlook and Bookings, and uses persistent follow-up logic to achieve the BRD's >95% feedback collection rate KPI.
+    </div>
+    <div class="proc-section">
+      <div class="proc-header">
+        <h3>Interview Coordination Agent — Step-by-Step Mapping</h3>
+        <span class="brd-ref">BRD §2.3 · Pattern: Single Agent</span>
+      </div>
+      <table class="proc-table">
+        <thead>
+          <tr><th>BRD Step</th><th>Process Step</th><th>AI Automation Action</th><th>Tools Used</th><th>Human Gate?</th><th>Impact</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="step-num">1</span></td>
+            <td>Interview scheduling (Outlook + Bookings)</td>
+            <td>Agent reads HM candidate ranking, checks interviewer availability via Outlook API, generates Bookings links for candidates, sends calendar invites automatically. Captures round number, format, location/link, and all attendees. Handles rescheduling requests autonomously within defined rules.</td>
+            <td><div class="tools-list"><span class="tool-tag">MS Outlook API</span><span class="tool-tag">MS Bookings API</span><span class="tool-tag">Calendar Availability Checker</span><span class="tool-tag">Invite Generator</span></div></td>
+            <td><span class="badge human">Candidate Selects Slot</span></td>
+            <td><span class="badge high">High</span></td>
+          </tr>
+          <tr>
+            <td><span class="step-num">2</span></td>
+            <td>Feedback prompt (30 min post-interview)</td>
+            <td>Agent sets a timer from interview start time. At T+30 min, dispatches a unique tokenised feedback link to each interviewer. Tracks link-open status. If not opened within 2 hours, sends a gentle follow-up. Escalates to TA Director if not submitted within OLA window.</td>
+            <td><div class="tools-list"><span class="tool-tag">Timer Service</span><span class="tool-tag">Unique Token Generator</span><span class="tool-tag">Email API</span><span class="tool-tag">Link Tracking</span></div></td>
+            <td>No</td>
+            <td><span class="badge high">High</span></td>
+          </tr>
+          <tr>
+            <td><span class="step-num">3</span></td>
+            <td>Feedback form — competency ratings, comments, recommendation</td>
+            <td>Agent dynamically generates the feedback form based on the vacancy's job-specific competency framework. Enforces that all fields are completed before submission (particularly the mandatory Proceed/Hold/Reject/More Rounds field). Multi-panellist submissions are merged into a consolidated view with individual scores visible.</td>
+            <td><div class="tools-list"><span class="tool-tag">Competency Framework API</span><span class="tool-tag">Dynamic Form Builder</span><span class="tool-tag">Form Validation Engine</span></div></td>
+            <td><span class="badge human">Interviewer Submits Feedback</span></td>
+            <td><span class="badge high">High</span></td>
+          </tr>
+          <tr>
+            <td><span class="step-num">4</span></td>
+            <td>Feedback tracking, storage & round counting</td>
+            <td>Agent maintains a real-time feedback dashboard per vacancy. Automatically links feedback to the correct candidate + vacancy + round combination. Tracks total rounds per candidate. Triggers next-step workflow (schedule next round, proceed to offer, or reject) based on majority interviewer recommendation once all panel feedback is received.</td>
+            <td><div class="tools-list"><span class="tool-tag">Feedback DB</span><span class="tool-tag">Round Counter</span><span class="tool-tag">Recommendation Aggregator</span><span class="tool-tag">Next-Step Trigger</span></div></td>
+            <td>No</td>
+            <td><span class="badge high">High</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- OFFER -->
+<div id="offer" class="section">
+  <div class="content">
+    <div class="section-intro">
+      <strong>BRD Sections 2.4 & 2.5 — Offer Management, Contract Issuance and Acceptance.</strong> The offer workflow combines a single Offer Intelligence Agent (for data validation, comparison table generation, and routing) with automated contract generation. Critical financial decisions remain firmly with human approvers (OD, CPO). The agent's primary value is in eliminating data entry, enforcing validation rules (e.g., 30% salary threshold), and generating the CPO comparison view automatically.
+    </div>
+    <div class="proc-section">
+      <div class="proc-header">
+        <h3>Offer Intelligence Agent + Contract Automation — Step-by-Step Mapping</h3>
+        <span class="brd-ref">BRD §2.4–2.5 · Pattern: Single Agent + Automation</span>
+      </div>
+      <table class="proc-table">
+        <thead>
+          <tr><th>BRD Step</th><th>Process Step</th><th>AI Automation Action</th><th>Tools Used</th><th>Human Gate?</th><th>Impact</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="step-num">1</span></td>
+            <td>Offer initiation by Recruiter</td>
+            <td>Agent verifies prerequisite: candidate has uploaded signed application form. If missing, agent sends a targeted reminder to the candidate via portal with a direct upload link and blocks offer initiation until satisfied. No manual recruiter chasing required.</td>
+            <td><div class="tools-list"><span class="tool-tag">Document Check API</span><span class="tool-tag">Candidate Portal API</span><span class="tool-tag">Prerequisite Rule Engine</span></div></td>
+            <td><span class="badge human">Recruiter Initiates</span></td>
+            <td><span class="badge medium">Medium</span></td>
+          </tr>
+          <tr>
+            <td><span class="step-num">2</span></td>
+            <td>Salary data entry & currency conversion</td>
+            <td>Agent auto-fetches current SAR exchange rate for any non-SAR salary entries. Converts all figures to SAR in real time as data is entered. Flags if the expected salary exceeds current by >30% threshold — generates a mandatory override justification field and notifies the Recruiter of the flag before routing to OD.</td>
+            <td><div class="tools-list"><span class="tool-tag">FX Rate API</span><span class="tool-tag">Threshold Validation Engine</span><span class="tool-tag">Override Flag Generator</span></div></td>
+            <td><span class="badge human">Recruiter Enters Data</span></td>
+            <td><span class="badge high">High</span></td>
+          </tr>
+          <tr>
+            <td><span class="step-num">3</span></td>
+            <td>Approval routing (OD → CPO)</td>
+            <td>Agent routes offer to correct OD member based on entity/country/grade mapping. Monitors OLA clock. Auto-generates the CPO comparison table upon OD approval — pulling current salary, expected salary, OD's proposed offer, and a market benchmark note (if available) into a side-by-side view. CPO sees a decision-ready package, not raw data.</td>
+            <td><div class="tools-list"><span class="tool-tag">Routing Engine</span><span class="tool-tag">OLA Timer</span><span class="tool-tag">Comparison Table Generator</span><span class="tool-tag">Market Benchmark API</span></div></td>
+            <td><span class="badge human">OD Reviews, CPO Decides</span></td>
+            <td><span class="badge high">High</span></td>
+          </tr>
+          <tr>
+            <td><span class="step-num">4</span></td>
+            <td>CPO approval decision (Approve / Reject / Comment)</td>
+            <td>Agent captures CPO decision with mandatory comment if rejected. Immediately notifies Recruiter with the decision and full context. If approved, agent queues the contract generation step. If rejected, agent provides a structured revision workflow guiding the Recruiter through what needs to change based on CPO comments.</td>
+            <td><div class="tools-list"><span class="tool-tag">Decision Capture API</span><span class="tool-tag">Notification Service</span><span class="tool-tag">Revision Workflow Engine</span></div></td>
+            <td><span class="badge human">CPO Approves/Rejects</span></td>
+            <td><span class="badge high">High</span></td>
+          </tr>
+          <tr>
+            <td><span class="step-num">5</span></td>
+            <td>Contract generation (company/country/level/nationality customised)</td>
+            <td>Agent merges approved offer data into the correct contract template (selected based on company, country, job level, and candidate nationality). Generates a draft contract, routes to CPO/HR GM for digital signature via integrated e-signature service. Zero manual document assembly.</td>
+            <td><div class="tools-list"><span class="tool-tag">Template Engine</span><span class="tool-tag">LLM Contract Merger</span><span class="tool-tag">eSignature API</span><span class="tool-tag">Entity/Country Rule Engine</span></div></td>
+            <td><span class="badge human">CPO/HR GM Signs</span></td>
+            <td><span class="badge high">High</span></td>
+          </tr>
+          <tr>
+            <td><span class="step-num">6</span></td>
+            <td>Candidate offer response (Accept / Reject)</td>
+            <td>Agent monitors candidate portal for response within defined window. Sends proactive, warm reminder messages if no response within 48 hours. Upon rejection, agent captures reason, updates status, and immediately notifies Recruiter with a structured brief on next steps (e.g., approach next ranked candidate). Upon acceptance, agent automatically triggers onboarding initiation workflow.</td>
+            <td><div class="tools-list"><span class="tool-tag">Portal Polling Service</span><span class="tool-tag">LLM Reminder Writer</span><span class="tool-tag">Status Update API</span><span class="tool-tag">Onboarding Trigger</span></div></td>
+            <td><span class="badge human">Candidate Accepts/Rejects</span></td>
+            <td><span class="badge high">High</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ONBOARDING -->
+<div id="onboarding" class="section">
+  <div class="content">
+    <div class="section-intro">
+      <strong>BRD Section 2.6 — Internal Collaboration for Onboarding Tasks.</strong> This is the most complex multi-agent use case in the BRD. An Onboarding Orchestrator Agent manages 5 specialist sub-agents (one per internal team: IT, BS, L&T, SS, HRBP) plus a Buddy Assignment Agent. Each sub-agent monitors its team's task list, chases overdue items, escalates per the escalation matrix, and reports status up to the Orchestrator. The result is a fully autonomous onboarding coordination layer requiring human action only on actual task completion.
+    </div>
+    <div class="proc-section">
+      <div class="proc-header">
+        <h3>Onboarding Orchestrator + 6 Sub-Agents — Step-by-Step Mapping</h3>
+        <span class="brd-ref">BRD §2.6 · Pattern: Multi-Agent</span>
+      </div>
+      <table class="proc-table">
+        <thead>
+          <tr><th>BRD Step</th><th>Process Step</th><th>Orchestrator / Sub-Agent Action</th><th>Tools Used</th><th>Human Gate?</th><th>Impact</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="step-num">1</span></td>
+            <td>Onboarding initiation (post-offer acceptance)</td>
+            <td>Orchestrator Agent receives trigger from offer acceptance event. Prepares initiation package (EDOJ, company/country checklist selection, candidate profile summary) and presents to Recruiter for the mandatory manual 'Initiate Onboarding' confirmation. Prevents premature initiation via status-lock enforcement.</td>
+            <td><div class="tools-list"><span class="tool-tag">Event Trigger API</span><span class="tool-tag">Checklist Rule Engine</span><span class="tool-tag">Entity Selector</span></div></td>
+            <td><span class="badge human">Recruiter Confirms Initiation</span></td>
+            <td><span class="badge high">High</span></td>
+          </tr>
+          <tr>
+            <td><span class="step-num">2</span></td>
+            <td>Task distribution to HRBP, IT, BS, L&T, SS, HM</td>
+            <td>Orchestrator auto-generates the correct onboarding task set based on company/country rules. Assigns tasks to each team's queue. Each team's sub-agent sends an intake notification with task details, EDOJ, and deadlines. Sub-agents are: IT Agent, BS Agent, L&T Agent, SS Agent, HRBP Agent.</td>
+            <td><div class="tools-list"><span class="tool-tag">Task Generation Engine</span><span class="tool-tag">Company/Country Config</span><span class="tool-tag">Team Queue API</span><span class="tool-tag">Notification Service</span></div></td>
+            <td>No</td>
+            <td><span class="badge high">High</span></td>
+          </tr>
+          <tr>
+            <td><span class="step-num">3a</span></td>
+            <td>IT Sub-Agent: Laptop, accounts, access provisioning</td>
+            <td>IT Sub-Agent monitors IT task queue. Sends reminders at defined intervals. Validates that mandatory fields (Asset Tag, Account Created, Access Granted flags) are populated when status is marked 'Completed'. Blocks completion submission if mandatory fields are empty. Escalates per matrix if overdue.</td>
+            <td><div class="tools-list"><span class="tool-tag">IT Ticket System API</span><span class="tool-tag">Field Validation</span><span class="tool-tag">Escalation Matrix</span></div></td>
+            <td><span class="badge human">IT Team Completes Tasks</span></td>
+            <td><span class="badge high">High</span></td>
+          </tr>
+          <tr>
+            <td><span class="step-num">3b</span></td>
+            <td>BS Sub-Agent: ERP profile, ID card, fingerprinting, travel</td>
+            <td>BS Sub-Agent manages the most complex task set. Validates ERP Employee ID is entered before marking ERP task complete. Tracks ID card and fingerprint steps as sequential dependencies. Automatically routes legal document requirements based on nationality. Escalates any overdue item to BS Team Manager, then TA Director.</td>
+            <td><div class="tools-list"><span class="tool-tag">ERP API</span><span class="tool-tag">Document Dependency Engine</span><span class="tool-tag">Nationality Rule Engine</span><span class="tool-tag">Escalation Matrix</span></div></td>
+            <td><span class="badge human">BS Team Completes Tasks</span></td>
+            <td><span class="badge high">High</span></td>
+          </tr>
+          <tr>
+            <td><span class="step-num">3c</span></td>
+            <td>L&T Sub-Agent: Induction schedule</td>
+            <td>L&T Sub-Agent automatically adds the new hire to the upcoming induction calendar slot that falls closest to (but not before) the EDOJ. Confirms the induction date back to the Orchestrator. Sends welcome-to-induction notification to the candidate via their portal.</td>
+            <td><div class="tools-list"><span class="tool-tag">Induction Calendar API</span><span class="tool-tag">EDOJ Comparator</span><span class="tool-tag">Candidate Portal API</span></div></td>
+            <td><span class="badge human">L&T Confirms Booking</span></td>
+            <td><span class="badge medium">Medium</span></td>
+          </tr>
+          <tr>
+            <td><span class="step-num">3d</span></td>
+            <td>SS Sub-Agent: Stationaries, desk, parking</td>
+            <td>SS Sub-Agent manages logistical task checklist. Sends structured task list with EDOJ deadline. Monitors completion. Flags parking allocation as location-dependent (auto-skips if location has no parking requirement). Reports completion status to Orchestrator.</td>
+            <td><div class="tools-list"><span class="tool-tag">Location Config Engine</span><span class="tool-tag">Logistics Task Tracker</span></div></td>
+            <td><span class="badge human">SS Team Completes Tasks</span></td>
+            <td><span class="badge low">Low</span></td>
+          </tr>
+          <tr>
+            <td><span class="step-num">3e</span></td>
+            <td>HRBP Sub-Agent: Desk/office assignment</td>
+            <td>HRBP Sub-Agent requests desk/office allocation information from HRBP with specific location and floor preference fields. Validates assignment is confirmed before closing task. Reports confirmed location back to Orchestrator and to the candidate's portal onboarding checklist.</td>
+            <td><div class="tools-list"><span class="tool-tag">Office Allocation API</span><span class="tool-tag">HRBP Task Queue</span><span class="tool-tag">Candidate Portal API</span></div></td>
+            <td><span class="badge human">HRBP Assigns Desk</span></td>
+            <td><span class="badge medium">Medium</span></td>
+          </tr>
+          <tr>
+            <td><span class="step-num">3f</span></td>
+            <td>HM Buddy Assignment</td>
+            <td>Buddy Assignment Agent prompts HM to nominate a buddy via a simple portal interface. Upon nomination, agent automatically sends the buddy a welcome notification with role context, new hire name, and EDOJ, plus a link to buddy guidance materials. Confirms assignment to Orchestrator.</td>
+            <td><div class="tools-list"><span class="tool-tag">HM Portal Interface</span><span class="tool-tag">Buddy Notification Service</span><span class="tool-tag">Guidance Materials Link</span></div></td>
+            <td><span class="badge human">HM Nominates Buddy</span></td>
+            <td><span class="badge medium">Medium</span></td>
+          </tr>
+          <tr>
+            <td><span class="step-num">4</span></td>
+            <td>Status monitoring & escalation</td>
+            <td>Orchestrator aggregates all sub-agent status reports into a single Onboarding Health Dashboard per candidate. Applies configurable escalation matrix: overdue tasks trigger Task Owner → Dept Manager → TA Director notification chain automatically. No manual monitoring by Recruiter needed; they only intervene on escalated exceptions.</td>
+            <td><div class="tools-list"><span class="tool-tag">Aggregation Engine</span><span class="tool-tag">Escalation Matrix</span><span class="tool-tag">Health Dashboard API</span></div></td>
+            <td>No</td>
+            <td><span class="badge high">High</span></td>
+          </tr>
+          <tr>
+            <td><span class="step-num">5</span></td>
+            <td>Final status: Ready for Day 1 / Joined</td>
+            <td>When all sub-agents report task completion, Orchestrator automatically updates candidate status to 'Ready for Day 1'. On EDOJ confirmation, status transitions to 'Joined'. Triggers a congratulatory notification to the candidate and sends a new hire announcement draft to the HM for approval before sending to the team.</td>
+            <td><div class="tools-list"><span class="tool-tag">Completion Checker</span><span class="tool-tag">Status Update API</span><span class="tool-tag">LLM Announcement Generator</span></div></td>
+            <td><span class="badge human">HM Approves Announcement</span></td>
+            <td><span class="badge medium">Medium</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- AGENCY -->
+<div id="agency" class="section">
+  <div class="content">
+    <div class="section-intro">
+      <strong>BRD Section 2.8 — External Agency Management Workflow.</strong> A single Agency Compliance Agent handles data segregation enforcement, invoice validation, approval routing, and Finance notification. The agent ensures strict data isolation between agencies — a critical compliance requirement — and automates the entire invoice processing lifecycle up to the human approval gate.
+    </div>
+    <div class="proc-section">
+      <div class="proc-header">
+        <h3>Agency Compliance Agent — Step-by-Step Mapping</h3>
+        <span class="brd-ref">BRD §2.8 · Pattern: Single Agent</span>
+      </div>
+      <table class="proc-table">
+        <thead>
+          <tr><th>BRD Step</th><th>Process Step</th><th>AI Automation Action</th><th>Tools Used</th><th>Human Gate?</th><th>Impact</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="step-num">1-3</span></td>
+            <td>Agency login, candidate submission & data segregation</td>
+            <td>Agent enforces agency ID-based data isolation at the API/data layer — not just UI. Agency users can only query candidates linked to their own Agency ID. Agent validates submitted candidate data completeness and auto-routes to Recruiter queue with agency source tag. Deduplication check against existing candidate pool is automatic.</td>
+            <td><div class="tools-list"><span class="tool-tag">Agency ID Filter API</span><span class="tool-tag">Data Isolation Layer</span><span class="tool-tag">Dedup Engine</span><span class="tool-tag">Recruiter Queue API</span></div></td>
+            <td>No</td>
+            <td><span class="badge high">High</span></td>
+          </tr>
+          <tr>
+            <td><span class="step-num">4-5</span></td>
+            <td>Invoice initiation & data validation</td>
+            <td>Agent monitors candidate milestone events. When a candidate reaches 'Offer Accepted' or 'Onboarded' status, agent automatically enables the 'Initiate Invoice' action for the relevant agency. Validates invoice form completeness (amount, date, PDF upload) and checks for duplicate invoice submissions before routing.</td>
+            <td><div class="tools-list"><span class="tool-tag">Milestone Event Listener</span><span class="tool-tag">Invoice Validation Engine</span><span class="tool-tag">Duplicate Invoice Check</span></div></td>
+            <td><span class="badge human">Agency Submits Invoice</span></td>
+            <td><span class="badge medium">Medium</span></td>
+          </tr>
+          <tr>
+            <td><span class="step-num">6</span></td>
+            <td>Internal approval workflow (TA Director → OD/Finance)</td>
+            <td>Agent routes invoice to TA Director, then OD Director / Finance approver in sequence. Monitors OLA. Sends reminders and escalates if not actioned within defined window. Captures approval decisions and comments.</td>
+            <td><div class="tools-list"><span class="tool-tag">Approval Routing Engine</span><span class="tool-tag">OLA Timer</span><span class="tool-tag">Notification Service</span></div></td>
+            <td><span class="badge human">TA Dir + Finance Approve</span></td>
+            <td><span class="badge medium">Medium</span></td>
+          </tr>
+          <tr>
+            <td><span class="step-num">7</span></td>
+            <td>Finance notification with invoice package</td>
+            <td>Upon final approval, agent compiles and dispatches the Finance notification package: approved invoice details, PDF attachment, candidate name, placement date, and agency name. No manual email assembly. Logs dispatch timestamp for audit trail.</td>
+            <td><div class="tools-list"><span class="tool-tag">Email Composer API</span><span class="tool-tag">Document Attachment Service</span><span class="tool-tag">Audit Logger</span></div></td>
+            <td>No</td>
+            <td><span class="badge medium">Medium</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- REPORTING -->
+<div id="reporting" class="section">
+  <div class="content">
+    <div class="section-intro">
+      <strong>BRD Sections 4.2 & 4.3 — KPI Monitoring, OLA Management & Reporting.</strong> A multi-agent Analytics System handles continuous KPI computation, OLA breach detection, alert dispatching, and report generation. This replaces manual data pulls and Excel-based reporting entirely, delivering the real-time visibility demanded by BRD Section 1.3 (Data Visibility objective).
+    </div>
+    <div class="proc-section">
+      <div class="proc-header">
+        <h3>Analytics Orchestrator + Alert & Report Sub-Agents — Mapping</h3>
+        <span class="brd-ref">BRD §4.2–4.3 · Pattern: Multi-Agent</span>
+      </div>
+      <table class="proc-table">
+        <thead>
+          <tr><th>KPI / Report</th><th>BRD Reference</th><th>Agent Action</th><th>Frequency</th><th>Recipient</th><th>Alert Trigger</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Time to Fill</strong></td>
+            <td>§4.2 Table 2</td>
+            <td>Agent calculates rolling average of Vacancy.RequestDate → Offer.AcceptanceDate. Segments by Division, Recruiter, Grade. Flags vacancies approaching the target threshold (<45 days) before breach.</td>
+            <td>Monthly + Live</td>
+            <td>TA Director</td>
+            <td>Approaching threshold</td>
+          </tr>
+          <tr>
+            <td><strong>OLA Breach Alerts</strong></td>
+            <td>§4.3 OLA Breach Report</td>
+            <td>Alert Sub-Agent polls all open tasks every 15 minutes. When any task exceeds its OLA, agent immediately dispatches a targeted alert to the task owner with context (what's overdue, by how long, next escalation step). Compiles a daily digest for TA Director.</td>
+            <td>Real-time + Daily</td>
+            <td>Task Owner → TA Director</td>
+            <td>OLA exceeded</td>
+          </tr>
+          <tr>
+            <td><strong>Offer Acceptance Rate</strong></td>
+            <td>§4.2 Table 2</td>
+            <td>Agent tracks Offers Extended vs Offers Accepted. Segments by Division, Grade, Source. When rate drops below threshold (e.g., 85%), agent generates an automated insight note citing the top rejection reasons from Offer.RejectionReason field and surfaces it to TA Director dashboard.</td>
+            <td>Monthly</td>
+            <td>TA Director</td>
+            <td>Rate < threshold</td>
+          </tr>
+          <tr>
+            <td><strong>Executive Digest</strong></td>
+            <td>§4.3</td>
+            <td>Report Sub-Agent generates a structured weekly digest — Time-to-Fill trends, Offer Acceptance Rate by division/grade, Source of Hire breakdown, and pipeline status for relevant vacancies. Personalised by Function Head's area. Distributed automatically every Monday 8 AM.</td>
+            <td>Weekly (Monday)</td>
+            <td>C-Suite, Function Heads</td>
+            <td>Scheduled</td>
+          </tr>
+          <tr>
+            <td><strong>Recruitment Funnel Analysis</strong></td>
+            <td>§4.3</td>
+            <td>Analytics Agent maintains a live funnel model (Applied → Screened → Shortlisted → Interviewed → Offered → Hired). Computes conversion rates at each stage. Surfaces stage-level drop-off anomalies (e.g., unusually high HM rejection rate on shortlists) as proactive insights.</td>
+            <td>Live / Ad-hoc</td>
+            <td>TA Team (Power BI)</td>
+            <td>Anomaly detected</td>
+          </tr>
+          <tr>
+            <td><strong>Agency Performance</strong></td>
+            <td>§4.3</td>
+            <td>Agent computes per-agency metrics: submission → interview → hire conversion rates. Automatically flags underperforming agencies (below benchmark) and surfaces cost-per-hire data when invoice records are available. Report distributed to TA Director monthly.</td>
+            <td>Monthly/Quarterly</td>
+            <td>TA Director</td>
+            <td>Below benchmark</td>
+          </tr>
+          <tr>
+            <td><strong>Onboarding Task OLA</strong></td>
+            <td>§4.2 Table 2</td>
+            <td>Onboarding Orchestrator feeds real-time task completion data to the Analytics Agent. Agent tracks % of tasks completed by EDOJ per team. Generates a weekly onboarding readiness report showing which new hires are at risk of not being 'Ready for Day 1'.</td>
+            <td>Weekly</td>
+            <td>TA Director, Team Leads</td>
+            <td>Task % < threshold</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ARCHITECTURE -->
+<div id="architecture" class="section">
+  <div class="content">
+    <div class="section-intro">
+      <strong>Agentic AI Architecture Overview.</strong> The following describes the recommended agent architecture across the full system. All agents operate within the existing system boundary defined by the BRD. No new external systems are required beyond those already in-scope (Outlook, Bookings, LinkedIn RSC, Power BI, SSO, ERP).
+    </div>
+    <div class="arch-grid">
+      <div class="arch-card">
+        <h4>🎯 Single Agent Patterns</h4>
+        <p>One agent, bounded scope, direct tool access. Best for linear workflows with clear inputs and outputs.</p>
+        <div class="agent-box">
+          <div class="agent-box-title"><span class="dot dot-blue"></span> Vacancy Intelligence Agent</div>
+          <div class="agent-box-desc">Pre-fill, validation, routing, chase, calendar coordination for vacancy workflow</div>
+          <div class="agent-box-tools"><span class="tool-tag">HR API</span><span class="tool-tag">Outlook</span><span class="tool-tag">Workflow Engine</span><span class="tool-tag">LLM</span></div>
+        </div>
+        <div class="agent-box">
+          <div class="agent-box-title"><span class="dot dot-blue"></span> Interview Coordination Agent</div>
+          <div class="agent-box-desc">End-to-end scheduling, feedback chasing, panel consolidation, escalation</div>
+          <div class="agent-box-tools"><span class="tool-tag">Bookings API</span><span class="tool-tag">Timer Service</span><span class="tool-tag">Form Builder</span></div>
+        </div>
+        <div class="agent-box">
+          <div class="agent-box-title"><span class="dot dot-blue"></span> Offer Intelligence Agent</div>
+          <div class="agent-box-desc">Salary validation, FX conversion, comparison table generation, contract merge</div>
+          <div class="agent-box-tools"><span class="tool-tag">FX API</span><span class="tool-tag">Template Engine</span><span class="tool-tag">eSignature</span></div>
+        </div>
+        <div class="agent-box">
+          <div class="agent-box-title"><span class="dot dot-blue"></span> Agency Compliance Agent</div>
+          <div class="agent-box-desc">Data isolation, invoice validation, approval routing, Finance notification</div>
+          <div class="agent-box-tools"><span class="tool-tag">Isolation Layer</span><span class="tool-tag">Invoice Engine</span><span class="tool-tag">Email API</span></div>
+        </div>
+        <div class="agent-box">
+          <div class="agent-box-title"><span class="dot dot-blue"></span> Candidate Experience Agent</div>
+          <div class="agent-box-desc">Portal interactions, status updates, support requests, job application assistance</div>
+          <div class="agent-box-tools"><span class="tool-tag">Portal API</span><span class="tool-tag">LLM Chat</span><span class="tool-tag">Status API</span></div>
+        </div>
+      </div>
+      <div class="arch-card">
+        <h4>🕸️ Multi-Agent Orchestration Patterns</h4>
+        <p>An Orchestrator delegates to specialist Sub-Agents. Best for parallel, complex, multi-stakeholder workflows.</p>
+        <div class="agent-box">
+          <div class="agent-box-title"><span class="dot dot-purple"></span> Sourcing Orchestrator</div>
+          <div class="agent-box-desc">Coordinates: Ingestion Agent → Screening Agent → Ranking Agent → Comms Agent</div>
+          <div class="agent-box-tools"><span class="tool-tag">CV Parser</span><span class="tool-tag">LLM Screener</span><span class="tool-tag">LinkedIn RSC</span><span class="tool-tag">Notification</span></div>
+        </div>
+        <div class="agent-box">
+          <div class="agent-box-title"><span class="dot dot-purple"></span> Onboarding Orchestrator</div>
+          <div class="agent-box-desc">Coordinates: IT Agent + BS Agent + L&T Agent + SS Agent + HRBP Agent + Buddy Agent</div>
+          <div class="agent-box-tools"><span class="tool-tag">ERP API</span><span class="tool-tag">Calendar API</span><span class="tool-tag">Escalation Matrix</span><span class="tool-tag">Portal API</span></div>
+        </div>
+        <div class="agent-box">
+          <div class="agent-box-title"><span class="dot dot-purple"></span> Analytics Orchestrator</div>
+          <div class="agent-box-desc">Coordinates: KPI Compute Agent + OLA Alert Agent + Report Generation Agent</div>
+          <div class="agent-box-tools"><span class="tool-tag">Data Warehouse</span><span class="tool-tag">Power BI API</span><span class="tool-tag">LLM Insight</span><span class="tool-tag">Email Service</span></div>
+        </div>
+      </div>
+      <div class="arch-card">
+        <h4>🔒 Human-in-the-Loop Design Principles</h4>
+        <p>All consequential decisions require human confirmation. Agents prepare, validate, and present — humans decide.</p>
+        <div class="agent-box">
+          <div class="agent-box-title"><span class="dot dot-red"></span> Mandatory Human Gates (12 total)</div>
+          <div class="agent-box-desc">HRBP Vacancy Approval · OD Vacancy Approval · TA Director Assignment · HM Sourcing Activation · HM Shortlist Accept/Reject · Interviewer Feedback · OD Offer Review · CPO Offer Approval · CPO/HR GM Contract Signature · Recruiter Onboarding Initiation · TA Director Invoice Approval · Finance Invoice Approval</div>
+        </div>
+        <div class="agent-box">
+          <div class="agent-box-title"><span class="dot dot-red"></span> Agent Boundaries</div>
+          <div class="agent-box-desc">Agents cannot: approve vacancies, make hiring decisions, approve offers, sign contracts, or modify compensation structures. They can: prepare, validate, route, chase, escalate, generate drafts, and update status.</div>
+        </div>
+      </div>
+      <div class="arch-card">
+        <h4>🔧 Shared Agent Infrastructure</h4>
+        <p>Common capabilities consumed by all agents across the system.</p>
+        <div class="agent-box">
+          <div class="agent-box-title"><span class="dot dot-green"></span> Tool Layer (Shared)</div>
+          <div class="agent-box-desc">Notification Service · Audit Logger · OLA Timer Engine · Entity/Country Rule Engine · LLM API (drafting, summarisation, scoring) · Escalation Matrix Engine · eSignature Service</div>
+        </div>
+        <div class="agent-box">
+          <div class="agent-box-title"><span class="dot dot-green"></span> Integration Layer (BRD §5.2)</div>
+          <div class="agent-box-desc">MS Outlook API · MS Bookings API · LinkedIn RSC API · SSO Identity Provider · ERP API · Power BI Data Feed · FX Rate API</div>
+        </div>
+        <div class="agent-box">
+          <div class="agent-box-title"><span class="dot dot-green"></span> Security & Compliance Layer</div>
+          <div class="agent-box-desc">All agent actions are scoped by RBAC roles (§3.2). Agents cannot access data outside their defined scope. All agent actions are written to audit trail. Sensitive data fields are never passed to LLM prompts in raw form.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ROADMAP -->
+<div id="roadmap" class="section">
+  <div class="content">
+    <div class="section-intro">
+      <strong>AI Implementation Roadmap — Aligned to BRD Project Phases.</strong> The agentic AI capabilities are sequenced to match the BRD's phased delivery plan. Phase 1 agents focus on the core recruitment flow; Phase 2 adds onboarding and agency automation; Phase 3 delivers the full analytics and insight layer.
+    </div>
+    <div class="roadmap">
+      <div class="phase-block">
+        <div class="phase-header p1">
+          <h4>Phase 1 — Core Recruitment AI Agents</h4>
+          <span>Aligned to BRD Phase 1 · Target: 2 months from start</span>
+        </div>
+        <div class="phase-body">
+          <div class="phase-items">
+            <div class="phase-item p1">
+              <div class="phase-item-title">Vacancy Intelligence Agent</div>
+              <div class="phase-item-desc">Smart form prefill, pre-submission validation, sequential approval routing, OLA-based chase & escalation, calendar-integrated intake scheduling</div>
+            </div>
+            <div class="phase-item p1">
+              <div class="phase-item-title">Sourcing Orchestrator (Core)</div>
+              <div class="phase-item-desc">Multi-source CV ingestion & parsing, data normalisation, LLM-powered screening scoring, shortlist ranking, HM briefing package generation</div>
+            </div>
+            <div class="phase-item p1">
+              <div class="phase-item-title">Interview Coordination Agent</div>
+              <div class="phase-item-desc">Outlook/Bookings integration for scheduling, T+30min feedback prompting, dynamic competency form generation, panel feedback consolidation</div>
+            </div>
+            <div class="phase-item p1">
+              <div class="phase-item-title">Offer Intelligence Agent (Core)</div>
+              <div class="phase-item-desc">Prerequisite check, salary validation + FX conversion, 30% threshold flagging, OD→CPO routing, comparison table auto-generation</div>
+            </div>
+            <div class="phase-item p1">
+              <div class="phase-item-title">Contract Generation Automation</div>
+              <div class="phase-item-desc">Entity/country/nationality template selection, auto-population of approved offer data, eSignature routing to CPO/HR GM</div>
+            </div>
+            <div class="phase-item p1">
+              <div class="phase-item-title">Candidate Comms Agent (Core)</div>
+              <div class="phase-item-desc">Personalised regret notifications (level/company/country customised), offer reminder messages, portal access lifecycle management</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phase-block">
+        <div class="phase-header p2">
+          <h4>Phase 2 — Onboarding, Agency & Support AI Agents</h4>
+          <span>Aligned to BRD Phase 2</span>
+        </div>
+        <div class="phase-body">
+          <div class="phase-items">
+            <div class="phase-item p2">
+              <div class="phase-item-title">Onboarding Orchestrator</div>
+              <div class="phase-item-desc">Full multi-agent onboarding coordination across IT, BS, L&T, SS, HRBP, and HM buddy assignment. Configurable escalation matrix, EDOJ-based status tracking</div>
+            </div>
+            <div class="phase-item p2">
+              <div class="phase-item-title">IT Sub-Agent</div>
+              <div class="phase-item-desc">Hardware provisioning task monitoring, account creation tracking, mandatory field validation (Asset Tag, Account ID), escalation to IT Manager</div>
+            </div>
+            <div class="phase-item p2">
+              <div class="phase-item-title">BS Sub-Agent</div>
+              <div class="phase-item-desc">ERP profile creation monitoring, sequential ID/fingerprint dependency tracking, nationality-based document routing, legal document processing coordination</div>
+            </div>
+            <div class="phase-item p2">
+              <div class="phase-item-title">L&T + SS + HRBP Sub-Agents</div>
+              <div class="phase-item-desc">Induction calendar auto-booking, logistics checklist management, desk allocation tracking, candidate portal updates for each completion</div>
+            </div>
+            <div class="phase-item p2">
+              <div class="phase-item-title">Agency Compliance Agent</div>
+              <div class="phase-item-desc">Agency data isolation enforcement, milestone-triggered invoice enablement, invoice validation, TA Director → Finance approval routing, Finance notification package dispatch</div>
+            </div>
+            <div class="phase-item p2">
+              <div class="phase-item-title">Candidate Experience Agent (Full)</div>
+              <div class="phase-item-desc">Chat-style support interface, support ticket routing, onboarding checklist status, welcoming materials delivery, portal access lifecycle automation</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phase-block">
+        <div class="phase-header p3">
+          <h4>Phase 3 — Intelligence, Analytics & Optimisation Agents</h4>
+          <span>Aligned to BRD Phase 3</span>
+        </div>
+        <div class="phase-body">
+          <div class="phase-items">
+            <div class="phase-item p3">
+              <div class="phase-item-title">Analytics Orchestrator</div>
+              <div class="phase-item-desc">Full KPI computation engine, Power BI data feed management, anomaly detection, proactive insight generation from pipeline data</div>
+            </div>
+            <div class="phase-item p3">
+              <div class="phase-item-title">OLA Alert Agent</div>
+              <div class="phase-item-desc">Real-time OLA breach detection across all workflow stages, targeted alert dispatch, daily digest generation, escalation trigger management</div>
+            </div>
+            <div class="phase-item p3">
+              <div class="phase-item-title">Executive Digest Agent</div>
+              <div class="phase-item-desc">Automated Monday morning executive report generation, personalised by Function Head scope, Time-to-Fill and Offer Acceptance trends, strategic insights</div>
+            </div>
+            <div class="phase-item p3">
+              <div class="phase-item-title">Sourcing Optimiser Agent</div>
+              <div class="phase-item-desc">Source effectiveness analysis (LinkedIn vs Agency vs Referral vs Direct), recruiter performance benchmarking, drop-off reason pattern analysis, actionable recommendations</div>
+            </div>
+            <div class="phase-item p3">
+              <div class="phase-item-title">Agency Performance Agent</div>
+              <div class="phase-item-desc">Per-agency conversion funnel tracking, underperformance flagging, cost-per-hire computation from invoice data, quarterly performance report generation</div>
+            </div>
+            <div class="phase-item p3">
+              <div class="phase-item-title">Continuous Improvement Agent</div>
+              <div class="phase-item-desc">Cross-process pattern analysis, OLA threshold optimisation recommendations, workflow bottleneck identification, recruiter coaching insight generation for TA Director</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: 32px;">
+      <div class="arch-card" style="background:white;border-radius:12px;padding:24px;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+        <h4 style="font-size:15px;font-weight:700;margin-bottom:16px;">⚙️ Guiding Principles for Agentic AI in this System</h4>
+        <div class="principles-grid">
+          <div class="principle-card">
+            <div class="principle-icon">🛡️</div>
+            <h4>Human Authority on Consequential Decisions</h4>
+            <p>All 12 identified human gates are non-negotiable. Agents prepare and present; humans decide on hiring, approvals, and offers. No agent has authority to autonomously approve a vacancy, select a candidate, or approve an offer.</p>
+          </div>
+          <div class="principle-card">
+            <div class="principle-icon">🔍</div>
+            <h4>Explainability & Audit Trail</h4>
+            <p>Every agent action is logged to the audit trail (BRD §5.4). Screening scores must cite evidence from CVs. Routing decisions must reference the rule applied. The system can explain any automated action taken.</p>
+          </div>
+          <div class="principle-card">
+            <div class="principle-icon">🌐</div>
+            <h4>Entity & Country Awareness</h4>
+            <p>All agents respect the BRD's multi-entity/multi-country requirement. Workflows, checklists, templates, and routing rules are dynamically selected based on the candidate's assigned company and location. No hardcoded single-entity logic.</p>
+          </div>
+          <div class="principle-card">
+            <div class="principle-icon">🔒</div>
+            <h4>Data Minimisation in AI Prompts</h4>
+            <p>Sensitive data (salary figures, personal IDs, EEO data) is never included raw in LLM prompts. Agents use anonymised or tokenised references where AI reasoning is needed, with enrichment done post-inference within the secure system boundary.</p>
+          </div>
+          <div class="principle-card">
+            <div class="principle-icon">📈</div>
+            <h4>Progressive Automation</h4>
+            <p>Phase 1 agents focus on high-certainty, rule-based automation. AI reasoning (LLM-powered screening, ranking, summarisation) is introduced in Phase 1 but with human review. Full autonomous flows are enabled only after baseline data validates agent accuracy.</p>
+          </div>
+          <div class="principle-card">
+            <div class="principle-icon">⚙️</div>
+            <h4>Admin Configurability</h4>
+            <p>All agent thresholds, OLA timers, escalation matrices, and notification templates are configurable via the Admin Center (BRD §5.1) without code changes. The TA Director can tune agent behaviour as operational patterns emerge.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,1697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TA &amp; Onboarding — Agentic Architecture</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+:root {
+  --clr-bg: #0f1117;
+  --clr-surface: #161b22;
+  --clr-surface2: #1c2333;
+  --clr-border: #30363d;
+  --clr-text: #e6edf3;
+  --clr-muted: #8b949e;
+  --clr-accent: #58a6ff;
+  --clr-single: #3b82f6;
+  --clr-multi: #10b981;
+  --clr-auto: #a855f7;
+  --clr-integration: #f59e0b;
+  --clr-kpi: #ef4444;
+  --radius: 8px;
+  --shadow: 0 2px 8px rgba(0,0,0,.35);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: var(--clr-bg);
+  color: var(--clr-text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+.hero {
+  background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #1a1e2e 100%);
+  border-bottom: 1px solid var(--clr-border);
+  padding: 3rem 2rem 2rem;
+  text-align: center;
+}
+.hero h1 { font-size: 2.2rem; font-weight: 700; margin-bottom: .5rem; }
+.hero h1 span { color: var(--clr-accent); }
+.hero p { color: var(--clr-muted); max-width: 720px; margin: 0 auto; font-size: 1.05rem; }
+
+.legend {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 1.5rem;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  font-size: .85rem;
+  color: var(--clr-muted);
+}
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tab-bar {
+  display: flex;
+  overflow-x: auto;
+  background: var(--clr-surface);
+  border-bottom: 1px solid var(--clr-border);
+  padding: 0 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+.tab-bar::-webkit-scrollbar { height: 3px; }
+.tab-bar::-webkit-scrollbar-thumb { background: var(--clr-border); border-radius: 4px; }
+
+.tab-btn {
+  background: none;
+  border: none;
+  color: var(--clr-muted);
+  padding: .85rem 1.1rem;
+  font-size: .82rem;
+  cursor: pointer;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  transition: color .2s, border-color .2s;
+  font-family: inherit;
+}
+.tab-btn:hover { color: var(--clr-text); }
+.tab-btn.active { color: var(--clr-accent); border-bottom-color: var(--clr-accent); }
+
+.tab-content { display: none; animation: fadeIn .3s ease; }
+.tab-content.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+.container { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+.section-header {
+  margin-bottom: 2rem;
+}
+.section-header h2 { font-size: 1.6rem; font-weight: 700; margin-bottom: .4rem; }
+.section-header p { color: var(--clr-muted); font-size: .95rem; }
+
+.grid { display: grid; gap: 1.25rem; }
+.grid-2 { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); }
+.grid-3 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+
+.card {
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow: var(--shadow);
+}
+.card h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-bottom: .75rem;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+
+.badge {
+  display: inline-block;
+  font-size: .7rem;
+  font-weight: 600;
+  padding: .2rem .55rem;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.badge-single { background: rgba(59,130,246,.15); color: var(--clr-single); }
+.badge-multi { background: rgba(16,185,129,.15); color: var(--clr-multi); }
+.badge-auto { background: rgba(168,85,247,.15); color: var(--clr-auto); }
+.badge-integration { background: rgba(245,158,11,.15); color: var(--clr-integration); }
+
+.agent-list { list-style: none; }
+.agent-list li {
+  padding: .55rem 0;
+  border-bottom: 1px solid var(--clr-border);
+  font-size: .9rem;
+  display: flex;
+  align-items: flex-start;
+  gap: .5rem;
+}
+.agent-list li:last-child { border-bottom: none; }
+.agent-list .icon { flex-shrink: 0; width: 20px; text-align: center; }
+
+.process-steps { counter-reset: step; list-style: none; }
+.process-steps li {
+  position: relative;
+  padding: .6rem 0 .6rem 2.2rem;
+  font-size: .9rem;
+  counter-increment: step;
+  border-left: 2px solid var(--clr-border);
+  margin-left: .65rem;
+}
+.process-steps li::before {
+  content: counter(step);
+  position: absolute;
+  left: -12px;
+  top: .55rem;
+  width: 22px;
+  height: 22px;
+  background: var(--clr-surface2);
+  border: 2px solid var(--clr-accent);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .7rem;
+  font-weight: 700;
+  color: var(--clr-accent);
+}
+.process-steps li:last-child { border-left-color: transparent; }
+.process-steps li strong { color: var(--clr-accent); }
+
+.diagram-wrapper {
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+  overflow-x: auto;
+}
+.diagram-wrapper h3 { margin-bottom: 1rem; font-size: 1rem; }
+
+.mermaid {
+  display: flex;
+  justify-content: center;
+}
+
+.role-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: .6rem;
+}
+.role-chip {
+  background: var(--clr-surface2);
+  border: 1px solid var(--clr-border);
+  border-radius: 6px;
+  padding: .5rem .75rem;
+  font-size: .8rem;
+  text-align: center;
+}
+
+.integration-card {
+  border-left: 3px solid var(--clr-integration);
+}
+
+.kpi-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .85rem;
+}
+.kpi-table th, .kpi-table td {
+  padding: .65rem .75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--clr-border);
+}
+.kpi-table th {
+  background: var(--clr-surface2);
+  color: var(--clr-accent);
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+}
+.kpi-table tr:hover td { background: rgba(88,166,255,.04); }
+.table-scroll { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--clr-border); }
+
+.stat-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+.stat-box {
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  flex: 1;
+  min-width: 160px;
+  text-align: center;
+}
+.stat-box .num { font-size: 1.8rem; font-weight: 700; color: var(--clr-accent); }
+.stat-box .label { font-size: .78rem; color: var(--clr-muted); margin-top: .2rem; }
+
+.highlight-box {
+  background: rgba(88,166,255,.06);
+  border: 1px solid rgba(88,166,255,.2);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  margin: 1rem 0;
+  font-size: .9rem;
+}
+
+.tool-tag {
+  display: inline-block;
+  background: var(--clr-surface2);
+  border: 1px solid var(--clr-border);
+  border-radius: 4px;
+  padding: .15rem .5rem;
+  font-size: .78rem;
+  margin: .15rem .15rem;
+  color: var(--clr-muted);
+}
+
+footer {
+  text-align: center;
+  padding: 2rem;
+  color: var(--clr-muted);
+  font-size: .8rem;
+  border-top: 1px solid var(--clr-border);
+}
+
+@media (max-width: 768px) {
+  .hero { padding: 2rem 1rem 1.5rem; }
+  .hero h1 { font-size: 1.5rem; }
+  .container { padding: 1.5rem 1rem; }
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  .stat-row { flex-direction: column; }
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>Talent Acquisition &amp; Onboarding<br><span>Agentic Architecture Blueprint</span></h1>
+  <p>Mapping Single Agents, Multi-Agent Workflows, and Agentic Automation across every stage of the integrated recruitment and onboarding lifecycle.</p>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--clr-single)"></div> Single Agent</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--clr-multi)"></div> Multi-Agent Workflow</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--clr-auto)"></div> Agentic Automation</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--clr-integration)"></div> Integration / Tooling</div>
+  </div>
+</div>
+
+<nav class="tab-bar" id="tabBar">
+  <button class="tab-btn active" data-tab="overview">Overview</button>
+  <button class="tab-btn" data-tab="vacancy">Vacancy Request &amp; Approval</button>
+  <button class="tab-btn" data-tab="sourcing">Sourcing &amp; Shortlisting</button>
+  <button class="tab-btn" data-tab="interview">Interview &amp; Feedback</button>
+  <button class="tab-btn" data-tab="offer">Offer Approval</button>
+  <button class="tab-btn" data-tab="contract">Contract &amp; Acceptance</button>
+  <button class="tab-btn" data-tab="onboarding">Onboarding</button>
+  <button class="tab-btn" data-tab="portal">Candidate Portal</button>
+  <button class="tab-btn" data-tab="agency">Agency Management</button>
+  <button class="tab-btn" data-tab="integrations">Integrations &amp; Tooling</button>
+  <button class="tab-btn" data-tab="kpis">KPIs &amp; Reporting</button>
+</nav>
+
+<!-- =========== OVERVIEW =========== -->
+<div class="tab-content active" id="tab-overview">
+  <div class="container">
+    <div class="section-header">
+      <h2>System Overview &amp; Agentic Strategy</h2>
+      <p>End-to-end mapping of autonomous agents across the Talent Acquisition &amp; Onboarding lifecycle for SRMG entities.</p>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-box"><div class="num">8</div><div class="label">Core Process Areas</div></div>
+      <div class="stat-box"><div class="num">14+</div><div class="label">User Roles</div></div>
+      <div class="stat-box"><div class="num">6</div><div class="label">External Integrations</div></div>
+      <div class="stat-box"><div class="num">17</div><div class="label">KPIs Tracked</div></div>
+    </div>
+
+    <div class="diagram-wrapper">
+      <h3>End-to-End Recruitment Lifecycle — Agent Overlay</h3>
+      <pre class="mermaid">
+flowchart LR
+  subgraph VR["1 · Vacancy Request"]
+    V1["Form Validation\nAgent"]
+    V2["Approval Routing\nOrchestrator"]
+  end
+  subgraph CS["2 · Sourcing"]
+    C1["CV Parsing\nAgent"]
+    C2["Sourcing\nOrchestrator"]
+  end
+  subgraph IV["3 · Interviews"]
+    I1["Calendar\nAgent"]
+    I2["Feedback\nCollector"]
+  end
+  subgraph OF["4 · Offer"]
+    O1["Salary Validation\nAgent"]
+    O2["Approval Chain\nOrchestrator"]
+  end
+  subgraph CT["5 · Contract"]
+    CT1["Contract Gen\nAgent"]
+    CT2["Signature\nOrchestrator"]
+  end
+  subgraph OB["6 · Onboarding"]
+    OB1["Task Distribution\nOrchestrator"]
+    OB2["Escalation\nAutomation"]
+  end
+
+  VR --> CS --> IV --> OF --> CT --> OB
+
+  style VR fill:#1a2332,stroke:#3b82f6,color:#e6edf3
+  style CS fill:#1a2332,stroke:#10b981,color:#e6edf3
+  style IV fill:#1a2332,stroke:#3b82f6,color:#e6edf3
+  style OF fill:#1a2332,stroke:#a855f7,color:#e6edf3
+  style CT fill:#1a2332,stroke:#10b981,color:#e6edf3
+  style OB fill:#1a2332,stroke:#a855f7,color:#e6edf3
+      </pre>
+    </div>
+
+    <div class="grid grid-3">
+      <div class="card">
+        <h3><span class="badge badge-single">Single Agent</span></h3>
+        <p style="font-size:.9rem;color:var(--clr-muted)">Handles one discrete, well-defined task autonomously. Stateless per invocation. Examples: CV parsing, salary threshold validation, calendar availability check, document verification.</p>
+        <ul class="agent-list" style="margin-top:.75rem">
+          <li><span class="icon">&#9673;</span> Form Validation Agent</li>
+          <li><span class="icon">&#9673;</span> CV/Resume Parsing Agent</li>
+          <li><span class="icon">&#9673;</span> Salary Validation Agent</li>
+          <li><span class="icon">&#9673;</span> Calendar Availability Agent</li>
+          <li><span class="icon">&#9673;</span> Contract Generation Agent</li>
+          <li><span class="icon">&#9673;</span> Document Verification Agent</li>
+          <li><span class="icon">&#9673;</span> Currency Conversion Agent</li>
+          <li><span class="icon">&#9673;</span> Duplicate Detection Agent</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3><span class="badge badge-multi">Multi-Agent Workflow</span></h3>
+        <p style="font-size:.9rem;color:var(--clr-muted)">Orchestrated chain of agents collaborating on a complex process. Maintains shared state, routes decisions, and handles branching logic across multiple steps and roles.</p>
+        <ul class="agent-list" style="margin-top:.75rem">
+          <li><span class="icon">&#9673;</span> Approval Chain Orchestrator</li>
+          <li><span class="icon">&#9673;</span> Sourcing Pipeline Orchestrator</li>
+          <li><span class="icon">&#9673;</span> Interview Scheduling Coordinator</li>
+          <li><span class="icon">&#9673;</span> Offer Approval Workflow</li>
+          <li><span class="icon">&#9673;</span> Contract Issuance Pipeline</li>
+          <li><span class="icon">&#9673;</span> Onboarding Task Orchestrator</li>
+          <li><span class="icon">&#9673;</span> Agency Submission Pipeline</li>
+          <li><span class="icon">&#9673;</span> Shortlist Review Workflow</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3><span class="badge badge-auto">Agentic Automation</span></h3>
+        <p style="font-size:.9rem;color:var(--clr-muted)">Event-driven autonomous agents that monitor, escalate, and act without human intervention. Continuously watches system state and triggers actions based on rules and SLA thresholds.</p>
+        <ul class="agent-list" style="margin-top:.75rem">
+          <li><span class="icon">&#9673;</span> OLA Breach Monitor</li>
+          <li><span class="icon">&#9673;</span> Escalation Matrix Engine</li>
+          <li><span class="icon">&#9673;</span> Auto-Regret Notification Agent</li>
+          <li><span class="icon">&#9673;</span> Feedback Reminder Agent</li>
+          <li><span class="icon">&#9673;</span> Day-1 Readiness Checker</li>
+          <li><span class="icon">&#9673;</span> Portal Access Lifecycle Agent</li>
+          <li><span class="icon">&#9673;</span> Audit Trail Logger</li>
+          <li><span class="icon">&#9673;</span> Data Retention Policy Agent</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="highlight-box" style="margin-top:2rem">
+      <strong>Design Principles:</strong> Each agent is scoped to a single responsibility. Multi-agent workflows orchestrate agents via a shared message bus. Agentic automation runs as background daemons, triggered by system events (status changes, timer expirations, threshold breaches). All agents log to a central audit trail. Configuration (SLAs, escalation rules, routing) is externalized to the Admin Center — no code changes required for routine adjustments.
+    </div>
+  </div>
+</div>
+
+<!-- =========== VACANCY REQUEST & APPROVAL =========== -->
+<div class="tab-content" id="tab-vacancy">
+  <div class="container">
+    <div class="section-header">
+      <h2>2.1 — Vacancy Request &amp; Approval Workflow</h2>
+      <p>Systematic initiation and multi-stage approval of hiring requests, from HM submission through TA Director assignment.</p>
+    </div>
+
+    <div class="diagram-wrapper">
+      <h3>Workflow — Agent Mapping</h3>
+      <pre class="mermaid">
+flowchart TD
+  A["HM / Recruiter / OD\nInitiates Vacancy Request"] -->|"Form Validation Agent ◉"| B["Data Capture\n(Title, Grade, Dept, Justification)"]
+  B -->|"Approval Routing Orchestrator ◎"| C{"HRBP Review\n& Approval"}
+  C -->|Approved| D{"OD Review\n& Financial Coding"}
+  C -->|Rejected| R1["Notify Initiator\nwith Reason"]
+  D -->|Approved| E{"TA Director\nFinal Approval"}
+  D -->|Rejected| R1
+  E -->|Approved| F["Recruiter\nAssignment"]
+  E -->|Rejected| R1
+  F --> G["Intake Meeting\nScheduling"]
+  G -->|"Calendar Agent ◉"| H["HM Confirms\nRequirements"]
+  H --> I["Vacancy Unlocked\nfor Sourcing"]
+
+  K["OLA Breach Monitor ◆"] -.->|"Watches each stage"| C
+  K -.-> D
+  K -.-> E
+
+  style A fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+  style B fill:#1a2332,stroke:#3b82f6,color:#e6edf3
+  style C fill:#1a2332,stroke:#10b981,color:#e6edf3
+  style D fill:#1a2332,stroke:#10b981,color:#e6edf3
+  style E fill:#1a2332,stroke:#10b981,color:#e6edf3
+  style F fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+  style G fill:#1a2332,stroke:#3b82f6,color:#e6edf3
+  style H fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+  style I fill:#1a2332,stroke:#10b981,color:#e6edf3
+  style K fill:#1e1530,stroke:#a855f7,color:#e6edf3
+  style R1 fill:#2d1a1a,stroke:#ef4444,color:#e6edf3
+      </pre>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <h3><span class="badge badge-single">Single Agent</span> Form Validation Agent</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> Validates all mandatory fields: Job Title, Grade, Division/Department, Justification</li>
+          <li><span class="icon">→</span> Checks for recommended candidate flag; enforces CV attachment if toggled on</li>
+          <li><span class="icon">→</span> Validates against ERP position data (company/country-specific rules)</li>
+          <li><span class="icon">→</span> Auto-enriches department hierarchy and reporting chain from org chart</li>
+        </ul>
+        <div style="margin-top:.75rem">
+          <span class="tool-tag">ERP API</span>
+          <span class="tool-tag">Org Chart Service</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3><span class="badge badge-single">Single Agent</span> Calendar Integration Agent</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> Checks Recruiter &amp; HM availability via Outlook calendar API</li>
+          <li><span class="icon">→</span> Sends intake meeting invitation with agenda template</li>
+          <li><span class="icon">→</span> Logs meeting details (date, time, attendees) to vacancy record</li>
+          <li><span class="icon">→</span> Supports Microsoft Bookings link generation for self-scheduling</li>
+        </ul>
+        <div style="margin-top:.75rem">
+          <span class="tool-tag">MS Outlook API</span>
+          <span class="tool-tag">MS Bookings</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3><span class="badge badge-multi">Multi-Agent</span> Approval Chain Orchestrator</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> Routes request sequentially: HRBP → OD → TA Director</li>
+          <li><span class="icon">→</span> Supports configurable approval chains per company/country/entity</li>
+          <li><span class="icon">→</span> Handles rejection at any stage — notifies initiator with comments</li>
+          <li><span class="icon">→</span> Maintains full audit trail: approver name, decision, timestamp</li>
+          <li><span class="icon">→</span> Supports optional "reviewer" layer (non-decisive visibility step)</li>
+        </ul>
+        <div style="margin-top:.75rem">
+          <span class="tool-tag">Workflow Engine</span>
+          <span class="tool-tag">Notification Service</span>
+          <span class="tool-tag">SSO / RBAC</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3><span class="badge badge-auto">Automation</span> OLA Breach Monitor</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> Continuously tracks time-in-stage for each pending approval</li>
+          <li><span class="icon">→</span> Fires alerts based on configurable OLA thresholds per stage</li>
+          <li><span class="icon">→</span> Multi-level escalation: Task Owner → Department Manager → TA Director</li>
+          <li><span class="icon">→</span> Generates daily OLA compliance report (RAG status)</li>
+        </ul>
+        <div style="margin-top:.75rem">
+          <span class="tool-tag">Escalation Matrix</span>
+          <span class="tool-tag">Email / Notifications</span>
+          <span class="tool-tag">Power BI Feed</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="highlight-box">
+      <strong>Process Gate:</strong> Sourcing cannot begin until the HM explicitly confirms intake completion within the system. This confirmation acts as a formal unlock — enforced by the orchestrator, not a manual check.
+    </div>
+
+    <div class="card" style="margin-top:1.25rem">
+      <h3>Roles Involved</h3>
+      <div class="role-grid">
+        <div class="role-chip">Hiring Manager</div>
+        <div class="role-chip">Recruiter</div>
+        <div class="role-chip">HRBP / Head</div>
+        <div class="role-chip">OD Team</div>
+        <div class="role-chip">TA Director</div>
+        <div class="role-chip">System Admin</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =========== SOURCING & SHORTLISTING =========== -->
+<div class="tab-content" id="tab-sourcing">
+  <div class="container">
+    <div class="section-header">
+      <h2>2.2 — Candidate Sourcing &amp; Shortlisting</h2>
+      <p>Multi-channel candidate acquisition, screening, and HM shortlist review with up to 3 iteration cycles.</p>
+    </div>
+
+    <div class="diagram-wrapper">
+      <h3>Sourcing Pipeline — Agent Mapping</h3>
+      <pre class="mermaid">
+flowchart TD
+  subgraph Sources["Multi-Channel Sourcing"]
+    S1["LinkedIn RSC"]
+    S2["Career Page"]
+    S3["Agency Portal"]
+    S4["Employee Referral"]
+    S5["Direct Apply"]
+  end
+
+  Sources -->|"Sourcing Orchestrator ◎"| P["CV Parsing Agent ◉\n(Extract & Normalize)"]
+  P --> D["Duplicate Detection Agent ◉"]
+  D --> SC["Screening\n(Structured Form)"]
+  SC --> SL["Recruiter Builds\nShortlist"]
+  SL -->|"Notification Agent"| HM{"HM Reviews\nShortlist"}
+  HM -->|"All Rejected"| RE{"Iteration\nCount < 3?"}
+  RE -->|Yes| SC
+  RE -->|No| IM["Back to Intake\nMeeting (2.1.6)"]
+  HM -->|"≥1 Accepted"| RK["HM Ranks\nCandidates"]
+  RK --> IV["→ Interview Stage"]
+
+  HM -->|"Rejected candidates"| RG["Auto-Regret\nNotification Agent ◆"]
+
+  style S1 fill:#1a2332,stroke:#f59e0b,color:#e6edf3
+  style S2 fill:#1a2332,stroke:#f59e0b,color:#e6edf3
+  style S3 fill:#1a2332,stroke:#f59e0b,color:#e6edf3
+  style S4 fill:#1a2332,stroke:#f59e0b,color:#e6edf3
+  style S5 fill:#1a2332,stroke:#f59e0b,color:#e6edf3
+  style P fill:#1a2332,stroke:#3b82f6,color:#e6edf3
+  style D fill:#1a2332,stroke:#3b82f6,color:#e6edf3
+  style SC fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+  style SL fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+  style HM fill:#1a2332,stroke:#10b981,color:#e6edf3
+  style RK fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+  style IV fill:#1a2332,stroke:#10b981,color:#e6edf3
+  style RE fill:#1a2332,stroke:#ef4444,color:#e6edf3
+  style IM fill:#2d1a1a,stroke:#ef4444,color:#e6edf3
+  style RG fill:#1e1530,stroke:#a855f7,color:#e6edf3
+      </pre>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <h3><span class="badge badge-single">Single Agent</span> CV Parsing Agent</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> Extracts structured data from uploaded CVs/resumes (PDF, DOCX)</li>
+          <li><span class="icon">→</span> Normalizes fields: name, email, phone, experience, education, skills</li>
+          <li><span class="icon">→</span> Tags candidate source automatically (LinkedIn, Referral, Agency, Direct)</li>
+          <li><span class="icon">→</span> Handles multi-language documents (English &amp; Arabic)</li>
+        </ul>
+        <div style="margin-top:.75rem">
+          <span class="tool-tag">Document Parser</span>
+          <span class="tool-tag">NLP Engine</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3><span class="badge badge-single">Single Agent</span> Duplicate Detection Agent</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> Fuzzy-matches incoming candidates against existing database</li>
+          <li><span class="icon">→</span> Checks email, phone, name combinations with configurable thresholds</li>
+          <li><span class="icon">→</span> Links candidate to historical applications if match found</li>
+          <li><span class="icon">→</span> Alerts recruiter for manual review on partial matches</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3><span class="badge badge-multi">Multi-Agent</span> Sourcing Pipeline Orchestrator</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> Aggregates candidates from all channels into a unified pipeline</li>
+          <li><span class="icon">→</span> Coordinates LinkedIn RSC integration for InMail tracking &amp; profile linking</li>
+          <li><span class="icon">→</span> Routes agency submissions through the parsing → dedup → screening flow</li>
+          <li><span class="icon">→</span> Tracks referral source linkage for employee referral program</li>
+          <li><span class="icon">→</span> Posts jobs to career page and LinkedIn simultaneously</li>
+        </ul>
+        <div style="margin-top:.75rem">
+          <span class="tool-tag">LinkedIn RSC API</span>
+          <span class="tool-tag">Career Page CMS</span>
+          <span class="tool-tag">Agency Portal</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3><span class="badge badge-multi">Multi-Agent</span> Shortlist Review Workflow</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> Notifies HM when shortlist is ready for review</li>
+          <li><span class="icon">→</span> Tracks Accept/Reject decisions per candidate</li>
+          <li><span class="icon">→</span> Enforces max 3 shortlist iterations rule</li>
+          <li><span class="icon">→</span> On all-reject, routes back to intake meeting after 3 iterations</li>
+          <li><span class="icon">→</span> On accept, enables ranking and moves to interview stage</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3><span class="badge badge-auto">Automation</span> Auto-Regret Notification Agent</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> Triggers customized regret emails for rejected candidates</li>
+          <li><span class="icon">→</span> Templates customized by level, company, and country</li>
+          <li><span class="icon">→</span> Scheduled delivery: next business day at 9 AM (avoids immediate sting)</li>
+          <li><span class="icon">→</span> Updates candidate portal access status upon final rejection</li>
+        </ul>
+        <div style="margin-top:.75rem">
+          <span class="tool-tag">Email Service</span>
+          <span class="tool-tag">Template Engine</span>
+          <span class="tool-tag">Scheduler</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3><span class="badge badge-auto">Automation</span> Source Effectiveness Tracker</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> Continuously computes conversion rates per candidate source</li>
+          <li><span class="icon">→</span> Feeds data to Power BI dashboards for quarterly analysis</li>
+          <li><span class="icon">→</span> Tracks: submissions → screened → interviewed → offered → hired</li>
+        </ul>
+        <div style="margin-top:.75rem">
+          <span class="tool-tag">Analytics Engine</span>
+          <span class="tool-tag">Power BI API</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =========== INTERVIEW & FEEDBACK =========== -->
+<div class="tab-content" id="tab-interview">
+  <div class="container">
+    <div class="section-header">
+      <h2>2.3 — Interview Scheduling &amp; Feedback Management</h2>
+      <p>Calendar-integrated scheduling, automated feedback prompts, and structured competency-based evaluation capture.</p>
+    </div>
+
+    <div class="diagram-wrapper">
+      <h3>Interview Lifecycle — Agent Mapping</h3>
+      <pre class="mermaid">
+flowchart TD
+  A["Candidate Accepted\nfor Interview"] --> B["Calendar Availability\nAgent ◉"]
+  B --> C["Send Calendar Invite\nvia Outlook"]
+  C --> D["Interview\nConducted"]
+  D -->|"+30 min"| E["Feedback Prompt\nAgent ◆"]
+  E --> F["Interviewer Submits\nStructured Feedback"]
+  F --> G{"Panel Feedback\nConsolidator ◎"}
+  G --> H{"Recommendation?"}
+  H -->|Proceed| I["→ Offer Stage"]
+  H -->|More Rounds| B
+  H -->|Hold| J["Candidate\non Hold"]
+  H -->|Reject| K["Auto-Regret\nAgent ◆"]
+
+  L["Feedback Overdue\nMonitor ◆"] -.->|"Watches submission"| F
+
+  style A fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+  style B fill:#1a2332,stroke:#3b82f6,color:#e6edf3
+  style C fill:#1a2332,stroke:#f59e0b,color:#e6edf3
+  style D fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+  style E fill:#1e1530,stroke:#a855f7,color:#e6edf3
+  style F fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+  style G fill:#1a2332,stroke:#10b981,color:#e6edf3
+  style H fill:#1a2332,stroke:#10b981,color:#e6edf3
+  style I fill:#1a2332,stroke:#10b981,color:#e6edf3
+  style J fill:#1a2332,stroke:#f59e0b,color:#e6edf3
+  style K fill:#1e1530,stroke:#a855f7,color:#e6edf3
+  style L fill:#1e1530,stroke:#a855f7,color:#e6edf3
+      </pre>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <h3><span class="badge badge-single">Single Agent</span> Calendar Availability Agent</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> Queries Outlook/Exchange for interviewer free/busy slots</li>
+          <li><span class="icon">→</span> Generates MS Bookings link for candidate self-scheduling</li>
+          <li><span class="icon">→</span> Creates calendar invite with: round number, date, time, location/link, attendees</li>
+          <li><span class="icon">→</span> Handles multi-round scheduling (round 1, 2, 3+)</li>
+        </ul>
+        <div style="margin-top:.75rem">
+          <span class="tool-tag">MS Outlook API</span>
+          <span class="tool-tag">MS Bookings</span>
+          <span class="tool-tag">MS Teams</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3><span class="badge badge-multi">Multi-Agent</span> Panel Feedback Consolidator</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> Merges individual interviewer feedback into a consolidated view</li>
+          <li><span class="icon">→</span> Aggregates competency scores (1–5 scale) across all panel members</li>
+          <li><span class="icon">→</span> Surfaces overall recommendation: Proceed / Hold / Reject / More Rounds</li>
+          <li><span class="icon">→</span> Presents unified view to Recruiter and HM for decision</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3><span class="badge badge-auto">Automation</span> Feedback Prompt Agent</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> Fires 30 minutes after scheduled interview start time</li>
+          <li><span class="icon">→</span> Sends email with unique link to structured feedback form</li>
+          <li><span class="icon">→</span> Form includes: competency ratings, comments, mandatory recommendation field</li>
+          <li><span class="icon">→</span> Supports different questionnaire types: competency-based, satisfaction survey</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3><span class="badge badge-auto">Automation</span> Feedback Overdue Monitor</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> Tracks feedback submission status for every completed interview</li>
+          <li><span class="icon">→</span> Sends follow-up reminders at configurable intervals</li>
+          <li><span class="icon">→</span> Escalates to TA Director if OLA breached (target: &gt;95% collection rate)</li>
+          <li><span class="icon">→</span> Feeds HM Response Time KPI to reporting layer</li>
+        </ul>
+        <div style="margin-top:.75rem">
+          <span class="tool-tag">Escalation Matrix</span>
+          <span class="tool-tag">KPI Engine</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:1.25rem">
+      <h3>Feedback Form Structure</h3>
+      <div class="grid grid-3" style="margin-top:.5rem">
+        <div>
+          <strong style="color:var(--clr-accent);font-size:.85rem">Competency Ratings</strong>
+          <p style="font-size:.85rem;color:var(--clr-muted)">Job-based skill areas rated on a 1–5 scale by each interviewer</p>
+        </div>
+        <div>
+          <strong style="color:var(--clr-accent);font-size:.85rem">Qualitative Comments</strong>
+          <p style="font-size:.85rem;color:var(--clr-muted)">Free-text justification and observations from each panel member</p>
+        </div>
+        <div>
+          <strong style="color:var(--clr-accent);font-size:.85rem">Overall Recommendation</strong>
+          <p style="font-size:.85rem;color:var(--clr-muted)">Mandatory: Proceed, Hold, Reject, or Request More Rounds</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =========== OFFER APPROVAL =========== -->
+<div class="tab-content" id="tab-offer">
+  <div class="container">
+    <div class="section-header">
+      <h2>2.4 — Offer Request, Approval &amp; Validation</h2>
+      <p>Financial validation, multi-stage approval with salary comparison, and compliance enforcement before offer extension.</p>
+    </div>
+
+    <div class="diagram-wrapper">
+      <h3>Offer Approval Chain — Agent Mapping</h3>
+      <pre class="mermaid">
+flowchart TD
+  A["Recruiter Initiates\nOffer Request"] --> B["Salary Data Entry\n(Current, Expected)"]
+  B --> C["Salary Validation\nAgent ◉"]
+  C -->|"> 30% Threshold"| D["Flag & Require\nOverride Justification"]
+  C -->|"Within Range"| E["Currency Conversion\nAgent ◉ (→ SAR)"]
+  D --> E
+  E -->|"Approval Orchestrator ◎"| F{"OD Review\n+ Proposed Offer"}
+  F -->|Approved| G{"CPO Final\nApproval"}
+  F -->|Rejected / Comments| H["Return to\nRecruiter"]
+  G -->|Approved| I["✓ Offer Ready\nfor Issuance"]
+  G -->|Rejected| H
+
+  J["Comparison View\nGenerator ◉"] -.->|"Auto-generates"| G
+  K["Pre-requisite\nChecker ◉"] -.->|"Blocks if missing"| I
+  L["Offer Approval\nOLA Monitor ◆"] -.->|"Watches each stage"| F
+  L -.-> G
+
+  style A fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+  style B fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+  style C fill:#1a2332,stroke:#3b82f6,color:#e6edf3
+  style D fill:#2d1a1a,stroke:#ef4444,color:#e6edf3
+  style E fill:#1a2332,stroke:#3b82f6,color:#e6edf3
+  style F fill:#1a2332,stroke:#10b981,color:#e6edf3
+  style G fill:#1a2332,stroke:#10b981,color:#e6edf3
+  style H fill:#1a2332,stroke:#f59e0b,color:#e6edf3
+  style I fill:#1a2332,stroke:#10b981,color:#e6edf3
+  style J fill:#1a2332,stroke:#3b82f6,color:#e6edf3
+  style K fill:#1a2332,stroke:#3b82f6,color:#e6edf3
+  style L fill:#1e1530,stroke:#a855f7,color:#e6edf3
+      </pre>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <h3><span class="badge badge-single">Single Agent</span> Salary Validation Agent</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> Compares expected salary against current salary</li>
+          <li><span class="icon">→</span> Flags when delta exceeds configurable threshold (default: 30%)</li>
+          <li><span class="icon">→</span> Requires explicit override justification before proceeding</li>
+          <li><span class="icon">→</span> Validates salary data is populated for the correct company/country</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3><span class="badge badge-single">Single Agent</span> Currency Conversion Agent</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> Converts all salary figures to SAR for standardized comparison</li>
+          <li><span class="icon">→</span> Handles multi-entity, multi-country salary inputs</li>
+          <li><span class="icon">→</span> Uses configurable exchange rates maintained in Admin Center</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3><span class="badge badge-single">Single Agent</span> Comparison View Generator</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> Auto-generates side-by-side table for CPO review</li>
+          <li><span class="icon">→</span> Displays: current salary, expected salary, OD comments, proposed offer</li>
+          <li><span class="icon">→</span> Highlights variances and OD analysis notes</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3><span class="badge badge-single">Single Agent</span> Pre-requisite Checker</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> Blocks offer issuance until required documents are uploaded</li>
+          <li><span class="icon">→</span> Company and country-specific document requirements</li>
+          <li><span class="icon">→</span> Checks signed application form via Candidate Portal upload</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3><span class="badge badge-multi">Multi-Agent</span> Offer Approval Orchestrator</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> Routes: Recruiter → OD Team (add details) → CPO (final decision)</li>
+          <li><span class="icon">→</span> CPO actions: Approve / Reject (mandatory justification) / Add Comments</li>
+          <li><span class="icon">→</span> Notifies recruiter of final decision immediately</li>
+          <li><span class="icon">→</span> Maintains full approval audit trail with timestamps</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3><span class="badge badge-auto">Automation</span> Offer Approval OLA Monitor</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> Tracks time-in-stage for OD and CPO approval steps</li>
+          <li><span class="icon">→</span> Fires escalation alerts per configurable OLA thresholds</li>
+          <li><span class="icon">→</span> Reports OLA compliance rate to leadership dashboards</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =========== CONTRACT & ACCEPTANCE =========== -->
+<div class="tab-content" id="tab-contract">
+  <div class="container">
+    <div class="section-header">
+      <h2>2.5 — Contract/Offer Issuance &amp; Acceptance</h2>
+      <p>Automated contract generation, digital signature workflow, and candidate response handling that triggers onboarding.</p>
+    </div>
+
+    <div class="diagram-wrapper">
+      <h3>Contract Issuance Pipeline — Agent Mapping</h3>
+      <pre class="mermaid">
+flowchart TD
+  A["Offer Approved\nInternally"] --> B["Contract Generation\nAgent ◉"]
+  B --> C["Recruiter Reviews\nDraft Contract"]
+  C -->|"Approve / Reject / Hold"| D{"Signature\nOrchestrator ◎"}
+  D --> E["CPO / HR GM\nDigital Signature"]
+  E --> F["Signed Contract\nSent to Candidate"]
+  F --> G["Candidate Reviews\nin Portal"]
+  G -->|Accept| H["Print, Sign,\nUpload to Portal"]
+  G -->|Reject| I["Mandatory Rejection\nComments"]
+  H --> J["Status: Offer Accepted\n🔑 Triggers Onboarding"]
+  I --> K["Recruiter Notified\nStatus Updated"]
+
+  L["Response Deadline\nMonitor ◆"] -.->|"Watches candidate"| G
+
+  style A fill:#1a2332,stroke:#10b981,color:#e6edf3
+  style B fill:#1a2332,stroke:#3b82f6,color:#e6edf3
+  style C fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+  style D fill:#1a2332,stroke:#10b981,color:#e6edf3
+  style E fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+  style F fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+  style G fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+  style H fill:#1a2332,stroke:#10b981,color:#e6edf3
+  style I fill:#2d1a1a,stroke:#ef4444,color:#e6edf3
+  style J fill:#1a2332,stroke:#10b981,color:#e6edf3
+  style K fill:#1a2332,stroke:#f59e0b,color:#e6edf3
+  style L fill:#1e1530,stroke:#a855f7,color:#e6edf3
+      </pre>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <h3><span class="badge badge-single">Single Agent</span> Contract Generation Agent</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> Generates contract from templates based on company, country, level, nationality</li>
+          <li><span class="icon">→</span> Populates salary, benefits, start date, and terms from approved offer record</li>
+          <li><span class="icon">→</span> Supports multi-language output (English &amp; Arabic)</li>
+          <li><span class="icon">→</span> Produces PDF for digital distribution and physical signing</li>
+        </ul>
+        <div style="margin-top:.75rem">
+          <span class="tool-tag">Template Engine</span>
+          <span class="tool-tag">PDF Generator</span>
+          <span class="tool-tag">i18n Service</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3><span class="badge badge-multi">Multi-Agent</span> Digital Signature Orchestrator</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> Routes generated contract to CPO/HR GM for digital signature</li>
+          <li><span class="icon">→</span> Applies digital signature and produces signed PDF</li>
+          <li><span class="icon">→</span> Sends signed contract to candidate via secure portal link</li>
+          <li><span class="icon">→</span> Tracks signature completion status and timestamps</li>
+        </ul>
+        <div style="margin-top:.75rem">
+          <span class="tool-tag">Digital Signature API</span>
+          <span class="tool-tag">Candidate Portal</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3><span class="badge badge-auto">Automation</span> Response Deadline Monitor</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> Tracks candidate response time after contract delivery</li>
+          <li><span class="icon">→</span> Sends reminder notifications at configurable intervals</li>
+          <li><span class="icon">→</span> Escalates to recruiter if no response within deadline</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3><span class="badge badge-auto">Automation</span> Onboarding Trigger Agent</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> Listens for "Offer Accepted" status change event</li>
+          <li><span class="icon">→</span> Enables onboarding initiation button for the Recruiter</li>
+          <li><span class="icon">→</span> Pre-loads company/country-specific onboarding checklist</li>
+          <li><span class="icon">→</span> Notifies all collaborator teams of incoming new hire</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =========== ONBOARDING =========== -->
+<div class="tab-content" id="tab-onboarding">
+  <div class="container">
+    <div class="section-header">
+      <h2>2.6 — Internal Collaboration for Onboarding Tasks</h2>
+      <p>Multi-team task orchestration across HRBP, IT, Business Support, L&amp;T, Shared Services, and Hiring Manager — all converging on Day-1 readiness.</p>
+    </div>
+
+    <div class="diagram-wrapper">
+      <h3>Onboarding Orchestration — Agent Mapping</h3>
+      <pre class="mermaid">
+flowchart TD
+  A["Recruiter Clicks\n'Initiate Onboarding'"] -->|"Onboarding Orchestrator ◎"| T["Task Distribution\nEngine"]
+
+  T --> H["HRBP\nDesk/Office"]
+  T --> IT["IT Team\nLaptop, Accounts, Access"]
+  T --> BS["BS Team\nERP Profile, ID Card,\nFingerprint, Travel, Legal"]
+  T --> LT["L&T Team\nInduction Schedule"]
+  T --> SS["SS Team\nStationaries, Desk/Chair,\nParking"]
+  T --> HM["Hiring Manager\nAssign Buddy"]
+
+  H --> TR["Onboarding\nTracker"]
+  IT --> TR
+  BS --> TR
+  LT --> TR
+  SS --> TR
+  HM --> TR
+
+  TR --> R{"All Tasks\nComplete?"}
+  R -->|Yes| D1["Status: Ready\nfor Day 1"]
+  D1 --> J["Status: Joined\n(EDOJ Confirmed)"]
+
+  ESC["Escalation Matrix\nEngine ◆"] -.->|"Multi-level"| TR
+  RDY["Day-1 Readiness\nChecker ◆"] -.->|"Validates completeness"| R
+
+  style A fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+  style T fill:#1a2332,stroke:#10b981,color:#e6edf3
+  style H fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+  style IT fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+  style BS fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+  style LT fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+  style SS fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+  style HM fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+  style TR fill:#1a2332,stroke:#10b981,color:#e6edf3
+  style R fill:#1a2332,stroke:#10b981,color:#e6edf3
+  style D1 fill:#1a2332,stroke:#10b981,color:#e6edf3
+  style J fill:#1a2332,stroke:#10b981,color:#e6edf3
+  style ESC fill:#1e1530,stroke:#a855f7,color:#e6edf3
+  style RDY fill:#1e1530,stroke:#a855f7,color:#e6edf3
+      </pre>
+    </div>
+
+    <div class="grid grid-3">
+      <div class="card">
+        <h3><span class="badge badge-multi">Multi-Agent</span> Onboarding Task Orchestrator</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> Generates tasks from configurable company/country checklist</li>
+          <li><span class="icon">→</span> Assigns to 6 collaborator teams in parallel</li>
+          <li><span class="icon">→</span> Tracks status: Not Started → In Progress → Completed</li>
+          <li><span class="icon">→</span> Captures mandatory fields per team (asset tags, ERP IDs, buddy name)</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3><span class="badge badge-auto">Automation</span> Escalation Matrix Engine</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> Multi-level: Task Owner → Dept Manager → TA Director</li>
+          <li><span class="icon">→</span> Configurable thresholds per task type and role</li>
+          <li><span class="icon">→</span> Generates daily consolidated overdue report</li>
+          <li><span class="icon">→</span> Managed via Admin Center — no code changes</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3><span class="badge badge-auto">Automation</span> Day-1 Readiness Checker</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> Validates all mandatory tasks are marked complete</li>
+          <li><span class="icon">→</span> Cross-checks against EDOJ deadline</li>
+          <li><span class="icon">→</span> Sends "Ready for Day 1" confirmation to all stakeholders</li>
+          <li><span class="icon">→</span> Flips to "Joined" upon EDOJ confirmation</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:1.25rem">
+      <h3>Collaborator Task Breakdown</h3>
+      <div class="table-scroll">
+        <table class="kpi-table">
+          <thead>
+            <tr><th>Team</th><th>Key Tasks</th><th>Mandatory Data Fields</th><th>Agent Type</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>HRBP</strong></td><td>Desk/Office assignment</td><td>Location, Floor, Desk Number</td><td><span class="badge badge-single">Single</span></td></tr>
+            <tr><td><strong>IT Team</strong></td><td>Laptop provisioning, account creation, app access</td><td>Asset Tag, Email, Network Access Level</td><td><span class="badge badge-single">Single</span></td></tr>
+            <tr><td><strong>BS Team</strong></td><td>ERP profile, ID card, fingerprint, travel, legal docs</td><td>ERP Employee ID, ID Card Number</td><td><span class="badge badge-single">Single</span></td></tr>
+            <tr><td><strong>L&amp;T Team</strong></td><td>Add to induction schedule</td><td>Induction Date Confirmed</td><td><span class="badge badge-single">Single</span></td></tr>
+            <tr><td><strong>SS Team</strong></td><td>Stationaries, desk/chair, parking</td><td>Parking Allocation ID</td><td><span class="badge badge-single">Single</span></td></tr>
+            <tr><td><strong>Hiring Manager</strong></td><td>Assign buddy</td><td>Buddy Name, auto-notification</td><td><span class="badge badge-single">Single</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="highlight-box">
+      <strong>Safety Gate:</strong> Onboarding requires a manual "Initiate Onboarding" click by the Recruiter — not auto-triggered by offer acceptance alone. This prevents accidental task distribution. Dynamic checklists adjust based on company/country configuration.
+    </div>
+  </div>
+</div>
+
+<!-- =========== CANDIDATE PORTAL =========== -->
+<div class="tab-content" id="tab-portal">
+  <div class="container">
+    <div class="section-header">
+      <h2>2.7 — Candidate Portal &amp; Job Posting</h2>
+      <p>Self-service portal for job discovery, application tracking, offer response, onboarding forms, and support — with lifecycle-managed access.</p>
+    </div>
+
+    <div class="diagram-wrapper">
+      <h3>Candidate Portal Architecture — Agent Mapping</h3>
+      <pre class="mermaid">
+flowchart LR
+  subgraph Portal["Candidate Portal"]
+    CP1["Career Page\n& Job Search"]
+    CP2["Application\nSubmission"]
+    CP3["Status\nTracking"]
+    CP4["Offer Review\n& Response"]
+    CP5["Onboarding\nForms & Docs"]
+    CP6["Support\nCenter (Chat)"]
+  end
+
+  CP1 -->|"Job Search Agent ◉"| JB["Job Board\nAggregator"]
+  CP2 -->|"CV Parsing Agent ◉"| AP["Application\nPipeline ◎"]
+  CP3 --> ST["Status Update\nNotifier ◆"]
+  CP4 --> SIG["Contract\nWorkflow ◎"]
+  CP5 -->|"Doc Verification Agent ◉"| OB["Onboarding\nOrchestrator ◎"]
+  CP6 -->|"Support Agent ◉"| TK["Ticket\nManagement"]
+
+  PAL["Portal Access\nLifecycle Agent ◆"] -.->|"Revokes on rejection\nor inactivity"| Portal
+
+  style CP1 fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+  style CP2 fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+  style CP3 fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+  style CP4 fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+  style CP5 fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+  style CP6 fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+  style JB fill:#1a2332,stroke:#f59e0b,color:#e6edf3
+  style AP fill:#1a2332,stroke:#10b981,color:#e6edf3
+  style ST fill:#1e1530,stroke:#a855f7,color:#e6edf3
+  style SIG fill:#1a2332,stroke:#10b981,color:#e6edf3
+  style OB fill:#1a2332,stroke:#10b981,color:#e6edf3
+  style TK fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+  style PAL fill:#1e1530,stroke:#a855f7,color:#e6edf3
+      </pre>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <h3><span class="badge badge-single">Single Agent</span> Document Verification Agent</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> Validates uploaded documents against country-specific requirements</li>
+          <li><span class="icon">→</span> Checks file format, size, and completeness</li>
+          <li><span class="icon">→</span> Dynamic document list: changes based on nationality (KSA vs. non-KSA)</li>
+          <li><span class="icon">→</span> Tracks status per document: Pending Upload → Uploaded → Verified</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3><span class="badge badge-single">Single Agent</span> Support Ticket Agent</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> Chat-style interface for candidate support requests</li>
+          <li><span class="icon">→</span> Creates structured tickets with: type, subject, description</li>
+          <li><span class="icon">→</span> Routes to appropriate team based on request type</li>
+          <li><span class="icon">→</span> Tracks resolution time for KPI reporting</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3><span class="badge badge-auto">Automation</span> Status Update Notifier</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> Pushes real-time status updates to candidate portal dashboard</li>
+          <li><span class="icon">→</span> Sends email notifications on key status changes</li>
+          <li><span class="icon">→</span> Welcoming material and checklist presented upon offer acceptance</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3><span class="badge badge-auto">Automation</span> Portal Access Lifecycle Agent</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> Automatically revokes portal access upon final rejection</li>
+          <li><span class="icon">→</span> Revokes after defined inactivity period post-completion</li>
+          <li><span class="icon">→</span> Manages save-draft and form-locking logic</li>
+          <li><span class="icon">→</span> Supports recruiter-initiated form unlock for corrections</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="highlight-box">
+      <strong>Key UX Requirements:</strong> Responsive (mobile + desktop), bilingual (English &amp; Arabic), save-draft for lengthy forms, form locking after submission with recruiter unlock capability. Candidate can only view their own data — strict privacy enforcement.
+    </div>
+  </div>
+</div>
+
+<!-- =========== AGENCY MANAGEMENT =========== -->
+<div class="tab-content" id="tab-agency">
+  <div class="container">
+    <div class="section-header">
+      <h2>2.8 — External Agency Management</h2>
+      <p>Secure agency portal with strict data isolation, candidate submission, milestone-based invoicing, and performance tracking.</p>
+    </div>
+
+    <div class="diagram-wrapper">
+      <h3>Agency Workflow — Agent Mapping</h3>
+      <pre class="mermaid">
+flowchart TD
+  A["Agency Logs In\n(Secure Portal)"] --> B["View Assigned\nVacancies"]
+  B --> C["Submit Candidate\n(Name, Contact, CV)"]
+  C -->|"Data Isolation Agent ◉"| D["Candidate Enters\nRecruitment Pipeline"]
+  D --> E{"Candidate Reaches\nMilestone?"}
+  E -->|"Offer Accepted / Onboarded"| F["'Initiate Invoice'\nButton Enabled"]
+  F --> G["Agency Enters\nInvoice Details"]
+  G -->|"Invoice Validation Agent ◉"| H{"Internal Approval\nWorkflow ◎"}
+  H -->|"TA Director → OD/Finance"| I["Invoice Approved"]
+  I --> J["Finance Notification\nAgent ◆"]
+  J --> K["Finance/Procurement\nReceives Invoice + Details"]
+
+  E -->|Not yet| L["Track Status\n(Own Agency Only)"]
+
+  PM["Agency Performance\nMonitor ◆"] -.->|"Quarterly analysis"| A
+
+  style A fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+  style B fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+  style C fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+  style D fill:#1a2332,stroke:#3b82f6,color:#e6edf3
+  style E fill:#1a2332,stroke:#10b981,color:#e6edf3
+  style F fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+  style G fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+  style H fill:#1a2332,stroke:#10b981,color:#e6edf3
+  style I fill:#1a2332,stroke:#10b981,color:#e6edf3
+  style J fill:#1e1530,stroke:#a855f7,color:#e6edf3
+  style K fill:#1a2332,stroke:#f59e0b,color:#e6edf3
+  style L fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+  style PM fill:#1e1530,stroke:#a855f7,color:#e6edf3
+      </pre>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <h3><span class="badge badge-single">Single Agent</span> Data Isolation Enforcer</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> Strictly enforces agency-level data segregation</li>
+          <li><span class="icon">→</span> Each agency sees only their own submitted candidates</li>
+          <li><span class="icon">→</span> Filters all queries by authenticated agency account ID</li>
+          <li><span class="icon">→</span> Prevents cross-agency data leakage at the query layer</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3><span class="badge badge-single">Single Agent</span> Invoice Validation Agent</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> Validates invoice fields: amount, date, comments, PDF attachment</li>
+          <li><span class="icon">→</span> Verifies candidate has reached required milestone status</li>
+          <li><span class="icon">→</span> Checks against agency agreement terms if configured</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3><span class="badge badge-multi">Multi-Agent</span> Invoice Approval Workflow</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> Routes: TA Director → OD Director / Finance Approver</li>
+          <li><span class="icon">→</span> Attaches invoice PDF and candidate reference to each step</li>
+          <li><span class="icon">→</span> On approval, triggers finance notification with full documentation</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3><span class="badge badge-auto">Automation</span> Agency Performance Monitor</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> Tracks: candidates submitted vs. interviewed vs. hired per agency</li>
+          <li><span class="icon">→</span> Computes shortlist conversion rate and cost-per-hire</li>
+          <li><span class="icon">→</span> Feeds quarterly agency performance dashboard in Power BI</li>
+          <li><span class="icon">→</span> Surfaces underperforming agencies for TA Director review</li>
+        </ul>
+        <div style="margin-top:.75rem">
+          <span class="tool-tag">Power BI API</span>
+          <span class="tool-tag">Analytics Engine</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =========== INTEGRATIONS & TOOLING =========== -->
+<div class="tab-content" id="tab-integrations">
+  <div class="container">
+    <div class="section-header">
+      <h2>Integrations &amp; Tooling Requirements</h2>
+      <p>External systems, APIs, and infrastructure required to power the agentic architecture across all process stages.</p>
+    </div>
+
+    <div class="diagram-wrapper">
+      <h3>Integration Landscape</h3>
+      <pre class="mermaid">
+flowchart LR
+  subgraph Core["TA & Onboarding System"]
+    WF["Workflow Engine"]
+    AG["Agent Runtime"]
+    DB["Data Layer"]
+    NT["Notification Service"]
+    AU["Audit Logger"]
+  end
+
+  OL["Microsoft\nOutlook"] <-->|"Calendar API"| WF
+  BK["Microsoft\nBookings"] <-->|"Scheduling API"| WF
+  LI["LinkedIn\nRSC"] <-->|"RSC API"| AG
+  PB["Power BI"] <-->|"Data Feed / API"| DB
+  SSO["Corporate\nSSO / IdP"] <-->|"SAML / OIDC"| AU
+  ERP["ERP\nSystem"] <-->|"REST API"| DB
+  DS["Digital\nSignature"] <-->|"Signature API"| AG
+
+  style Core fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+  style OL fill:#1a2332,stroke:#f59e0b,color:#e6edf3
+  style BK fill:#1a2332,stroke:#f59e0b,color:#e6edf3
+  style LI fill:#1a2332,stroke:#f59e0b,color:#e6edf3
+  style PB fill:#1a2332,stroke:#f59e0b,color:#e6edf3
+  style SSO fill:#1a2332,stroke:#f59e0b,color:#e6edf3
+  style ERP fill:#1a2332,stroke:#f59e0b,color:#e6edf3
+  style DS fill:#1a2332,stroke:#f59e0b,color:#e6edf3
+      </pre>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card integration-card">
+        <h3><span class="badge badge-integration">Integration</span> Microsoft Outlook / Exchange</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> <strong>Purpose:</strong> Interview scheduling, intake meeting invites, calendar availability</li>
+          <li><span class="icon">→</span> <strong>Protocol:</strong> Microsoft Graph API (REST)</li>
+          <li><span class="icon">→</span> <strong>Used By:</strong> Calendar Availability Agent, Interview Scheduling Coordinator</li>
+          <li><span class="icon">→</span> <strong>Data Flow:</strong> Bi-directional (send invites, read free/busy)</li>
+        </ul>
+      </div>
+
+      <div class="card integration-card">
+        <h3><span class="badge badge-integration">Integration</span> Microsoft Bookings</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> <strong>Purpose:</strong> Self-service interview slot selection by candidates/interviewers</li>
+          <li><span class="icon">→</span> <strong>Protocol:</strong> Bookings API or embedded link generation</li>
+          <li><span class="icon">→</span> <strong>Used By:</strong> Calendar Availability Agent</li>
+          <li><span class="icon">→</span> <strong>Data Flow:</strong> Outbound (generate booking links)</li>
+        </ul>
+      </div>
+
+      <div class="card integration-card">
+        <h3><span class="badge badge-integration">Integration</span> LinkedIn Recruiter System Connect (RSC)</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> <strong>Purpose:</strong> InMail tracking, job posting, profile linking, project association</li>
+          <li><span class="icon">→</span> <strong>Protocol:</strong> LinkedIn RSC API</li>
+          <li><span class="icon">→</span> <strong>Used By:</strong> Sourcing Pipeline Orchestrator, Source Effectiveness Tracker</li>
+          <li><span class="icon">→</span> <strong>Config:</strong> Toggle enable/disable via Admin Center (per-project or global)</li>
+        </ul>
+      </div>
+
+      <div class="card integration-card">
+        <h3><span class="badge badge-integration">Integration</span> Power BI / Visualization Tool</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> <strong>Purpose:</strong> Dashboards, KPI reporting, executive digests, funnel analysis</li>
+          <li><span class="icon">→</span> <strong>Protocol:</strong> Direct database connection or scheduled data feed via API</li>
+          <li><span class="icon">→</span> <strong>Used By:</strong> All monitoring agents, KPI engines, reporting layer</li>
+          <li><span class="icon">→</span> <strong>Data:</strong> Optimized with Choice fields for efficient BI consumption</li>
+        </ul>
+      </div>
+
+      <div class="card integration-card">
+        <h3><span class="badge badge-integration">Integration</span> Corporate SSO / Identity Provider</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> <strong>Purpose:</strong> User authentication, role mapping, access control enforcement</li>
+          <li><span class="icon">→</span> <strong>Protocol:</strong> SAML 2.0 / OpenID Connect (OIDC)</li>
+          <li><span class="icon">→</span> <strong>Used By:</strong> All portal access, RBAC enforcement across 14+ roles</li>
+          <li><span class="icon">→</span> <strong>Security:</strong> Maps corporate directory groups to application roles</li>
+        </ul>
+      </div>
+
+      <div class="card integration-card">
+        <h3><span class="badge badge-integration">Integration</span> ERP System</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> <strong>Purpose:</strong> Position status updates (Open/Filled), employee record creation</li>
+          <li><span class="icon">→</span> <strong>Protocol:</strong> REST API</li>
+          <li><span class="icon">→</span> <strong>Used By:</strong> Form Validation Agent, Onboarding Orchestrator (BS Team)</li>
+          <li><span class="icon">→</span> <strong>Data Flow:</strong> Bi-directional (read positions, write new employees)</li>
+        </ul>
+      </div>
+
+      <div class="card integration-card">
+        <h3><span class="badge badge-integration">Integration</span> Digital Signature Service</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> <strong>Purpose:</strong> CPO/HR GM contract signing, candidate offer letter signing</li>
+          <li><span class="icon">→</span> <strong>Protocol:</strong> Digital Signature API (e.g., DocuSign, Adobe Sign)</li>
+          <li><span class="icon">→</span> <strong>Used By:</strong> Digital Signature Orchestrator, Contract Generation Agent</li>
+        </ul>
+      </div>
+
+      <div class="card integration-card">
+        <h3><span class="badge badge-integration">Integration</span> Email / Notification Service</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> <strong>Purpose:</strong> All automated notifications, regret emails, alerts, reminders</li>
+          <li><span class="icon">→</span> <strong>Protocol:</strong> SMTP / MS Graph Mail API</li>
+          <li><span class="icon">→</span> <strong>Used By:</strong> All notification agents, escalation engine, OLA monitors</li>
+          <li><span class="icon">→</span> <strong>Config:</strong> Templates managed via Admin Center (RACI-based routing)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:1.5rem">
+      <h3>Infrastructure &amp; Platform Tooling</h3>
+      <div class="grid grid-3" style="margin-top:.75rem">
+        <div>
+          <strong style="color:var(--clr-accent);font-size:.85rem">Workflow Engine</strong>
+          <p style="font-size:.85rem;color:var(--clr-muted)">Configurable approval chains, sequential/parallel routing, gate logic. Admin-managed without code changes.</p>
+        </div>
+        <div>
+          <strong style="color:var(--clr-accent);font-size:.85rem">Agent Runtime</strong>
+          <p style="font-size:.85rem;color:var(--clr-muted)">Stateless agent execution with shared message bus. Event-driven triggers, timer-based scheduling, retry logic.</p>
+        </div>
+        <div>
+          <strong style="color:var(--clr-accent);font-size:.85rem">Document Store</strong>
+          <p style="font-size:.85rem;color:var(--clr-muted)">Secure, centralized repository for CVs, contracts, invoices. Role-based access, retention policies, encryption at rest.</p>
+        </div>
+        <div>
+          <strong style="color:var(--clr-accent);font-size:.85rem">Audit Trail Service</strong>
+          <p style="font-size:.85rem;color:var(--clr-muted)">Immutable logging of all actions: who, what, when. Covers approvals, rejections, status changes, config changes.</p>
+        </div>
+        <div>
+          <strong style="color:var(--clr-accent);font-size:.85rem">Admin Center</strong>
+          <p style="font-size:.85rem;color:var(--clr-muted)">Self-service config for: reference data, RBAC, workflows, OLAs, escalation rules, notification templates, integration toggles.</p>
+        </div>
+        <div>
+          <strong style="color:var(--clr-accent);font-size:.85rem">i18n Engine</strong>
+          <p style="font-size:.85rem;color:var(--clr-muted)">Bi-directional language support (English &amp; Arabic). All labels, messages, templates, and contract content translatable.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =========== KPIs & REPORTING =========== -->
+<div class="tab-content" id="tab-kpis">
+  <div class="container">
+    <div class="section-header">
+      <h2>KPIs, OLAs &amp; Reporting Dashboards</h2>
+      <p>Comprehensive metrics tracked by agentic monitors, feeding role-based dashboards and executive digests.</p>
+    </div>
+
+    <div class="grid grid-2" style="margin-bottom:1.5rem">
+      <div class="card">
+        <h3><span class="badge badge-auto">Automation</span> KPI Computation Engine</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> Continuously computes all 17+ KPIs from live operational data</li>
+          <li><span class="icon">→</span> Feeds Power BI via direct connection or scheduled data extracts</li>
+          <li><span class="icon">→</span> Supports configurable targets and thresholds via Admin Center</li>
+          <li><span class="icon">→</span> RAG (Red/Amber/Green) status indicators for at-a-glance monitoring</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3><span class="badge badge-auto">Automation</span> OLA Breach Alert System</h3>
+        <ul class="agent-list">
+          <li><span class="icon">→</span> Real-time alerts when any task breaches its OLA threshold</li>
+          <li><span class="icon">→</span> Daily consolidated breach report to TA Director</li>
+          <li><span class="icon">→</span> Covers: vacancy approvals, offer approvals, feedback, onboarding, tickets</li>
+          <li><span class="icon">→</span> Escalation path: task owner → escalation point per matrix</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:1.5rem">
+      <h3>KPI &amp; OLA Metrics</h3>
+      <div class="table-scroll">
+        <table class="kpi-table">
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th>Definition</th>
+              <th>Target</th>
+              <th>Owner</th>
+              <th>Agent Type</th>
+              <th>Frequency</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Time to Fill</strong></td>
+              <td>Avg. days from Vacancy Request to Offer Acceptance</td>
+              <td>&lt;45 days</td>
+              <td>TA Director</td>
+              <td><span class="badge badge-auto">Monitor</span></td>
+              <td>Monthly</td>
+            </tr>
+            <tr>
+              <td><strong>Time in Stage</strong></td>
+              <td>Avg. days in each workflow stage</td>
+              <td>TBD/stage</td>
+              <td>TA Director</td>
+              <td><span class="badge badge-auto">Monitor</span></td>
+              <td>Monthly</td>
+            </tr>
+            <tr>
+              <td><strong>Recruiter Response Time</strong></td>
+              <td>Days from assignment to action (e.g., shortlist)</td>
+              <td>&lt;5 days</td>
+              <td>Recruiter</td>
+              <td><span class="badge badge-auto">Monitor</span></td>
+              <td>Weekly</td>
+            </tr>
+            <tr>
+              <td><strong>HM Shortlist Response</strong></td>
+              <td>Days from shortlist notification to HM decision</td>
+              <td>Per OLA</td>
+              <td>Hiring Manager</td>
+              <td><span class="badge badge-auto">Monitor</span></td>
+              <td>Weekly</td>
+            </tr>
+            <tr>
+              <td><strong>HM Feedback Response</strong></td>
+              <td>Days from interview to feedback submission</td>
+              <td>Per OLA</td>
+              <td>Hiring Manager</td>
+              <td><span class="badge badge-auto">Monitor</span></td>
+              <td>Weekly</td>
+            </tr>
+            <tr>
+              <td><strong>Shortlist Conversion Rate</strong></td>
+              <td>% shortlisted candidates accepted for interview</td>
+              <td>&gt;70%</td>
+              <td>Recruiter / TA Dir</td>
+              <td><span class="badge badge-auto">Tracker</span></td>
+              <td>Monthly</td>
+            </tr>
+            <tr>
+              <td><strong>Interview-to-Offer Ratio</strong></td>
+              <td>% interviewed candidates receiving an offer</td>
+              <td>TBD</td>
+              <td>Recruiter / TA Dir</td>
+              <td><span class="badge badge-auto">Tracker</span></td>
+              <td>Monthly</td>
+            </tr>
+            <tr>
+              <td><strong>Offer Acceptance Rate</strong></td>
+              <td>% offers accepted by candidates</td>
+              <td>&gt;85%</td>
+              <td>TA Director</td>
+              <td><span class="badge badge-auto">Tracker</span></td>
+              <td>Monthly</td>
+            </tr>
+            <tr>
+              <td><strong>Source Effectiveness</strong></td>
+              <td>Hires &amp; acceptance rate per source channel</td>
+              <td>Analysis</td>
+              <td>TA Director</td>
+              <td><span class="badge badge-auto">Tracker</span></td>
+              <td>Quarterly</td>
+            </tr>
+            <tr>
+              <td><strong>Drop-off Reasons</strong></td>
+              <td>Analysis of withdrawal/rejection reasons per stage</td>
+              <td>Analysis</td>
+              <td>TA Director</td>
+              <td><span class="badge badge-auto">Analyzer</span></td>
+              <td>Monthly</td>
+            </tr>
+            <tr>
+              <td><strong>Vacancy Approval OLA</strong></td>
+              <td>% approvals within defined time per stage</td>
+              <td>Per OLA</td>
+              <td>HRBP / OD</td>
+              <td><span class="badge badge-auto">Monitor</span></td>
+              <td>Weekly</td>
+            </tr>
+            <tr>
+              <td><strong>Offer Approval OLA</strong></td>
+              <td>% offer approvals within defined time per stage</td>
+              <td>Per OLA</td>
+              <td>OD / CPO</td>
+              <td><span class="badge badge-auto">Monitor</span></td>
+              <td>Weekly</td>
+            </tr>
+            <tr>
+              <td><strong>Feedback Collection Rate</strong></td>
+              <td>% interviews with submitted feedback</td>
+              <td>&gt;95%</td>
+              <td>Recruiter / TA Dir</td>
+              <td><span class="badge badge-auto">Monitor</span></td>
+              <td>Weekly</td>
+            </tr>
+            <tr>
+              <td><strong>Agency Performance</strong></td>
+              <td>Submitted vs. interviewed vs. hired per agency</td>
+              <td>Analysis</td>
+              <td>TA Director</td>
+              <td><span class="badge badge-auto">Tracker</span></td>
+              <td>Quarterly</td>
+            </tr>
+            <tr>
+              <td><strong>Candidate Satisfaction</strong></td>
+              <td>Avg. post-process survey score</td>
+              <td>TBD</td>
+              <td>TA Director</td>
+              <td><span class="badge badge-single">Survey</span></td>
+              <td>Quarterly</td>
+            </tr>
+            <tr>
+              <td><strong>Ticket Resolution Time</strong></td>
+              <td>Avg. time from ticket open to resolution</td>
+              <td>Per OLA</td>
+              <td>Support Leads</td>
+              <td><span class="badge badge-auto">Monitor</span></td>
+              <td>Weekly</td>
+            </tr>
+            <tr>
+              <td><strong>Onboarding Task OLA</strong></td>
+              <td>% collaborator tasks completed by EDOJ</td>
+              <td>Per OLA</td>
+              <td>Collaborator Teams</td>
+              <td><span class="badge badge-auto">Monitor</span></td>
+              <td>Weekly</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <h3>Dashboard Types</h3>
+        <ul class="agent-list">
+          <li><span class="icon">📊</span> <strong>TA Team Dashboard:</strong> Open vacancies, pipeline summary, overdue tasks, OLA RAG status, recruiter workload</li>
+          <li><span class="icon">📊</span> <strong>Executive Digest:</strong> Weekly summary — Time-to-Fill trends, Offer Acceptance Rates, Source of Hire, funnel conversion</li>
+          <li><span class="icon">📊</span> <strong>OLA Breach Report:</strong> Real-time/daily alerts for all breached tasks across workflows</li>
+          <li><span class="icon">📊</span> <strong>Recruitment Funnel:</strong> Interactive Applied → Screened → Shortlisted → Interviewed → Offered → Hired</li>
+          <li><span class="icon">📊</span> <strong>Agency Performance:</strong> Submissions, conversion rates, hires, cost-per-hire per agency</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>Dashboard Access by Role</h3>
+        <div class="table-scroll" style="margin-top:.5rem">
+          <table class="kpi-table">
+            <thead><tr><th>Role</th><th>Dashboard Access</th></tr></thead>
+            <tbody>
+              <tr><td>TA Director</td><td>All dashboards (Full)</td></tr>
+              <tr><td>Recruiter</td><td>Standard views (non-sensitive)</td></tr>
+              <tr><td>Hiring Manager</td><td>Own vacancy metrics only</td></tr>
+              <tr><td>HRBP</td><td>Standard views</td></tr>
+              <tr><td>OD / CPO</td><td>Offer-related metrics</td></tr>
+              <tr><td>Executive Viewer</td><td>All dashboards (Read-only)</td></tr>
+              <tr><td>Agency User</td><td>Own performance metrics only</td></tr>
+              <tr><td>L&amp;T Team</td><td>Joining candidate list</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  Talent Acquisition &amp; Onboarding — Agentic Architecture Blueprint &middot; SRMG &middot; BRD v1.0
+</footer>
+
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a2332',
+    primaryTextColor: '#e6edf3',
+    primaryBorderColor: '#30363d',
+    lineColor: '#58a6ff',
+    secondaryColor: '#161b22',
+    tertiaryColor: '#1c2333',
+    fontFamily: '-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif',
+    fontSize: '13px'
+  },
+  flowchart: {
+    htmlLabels: true,
+    curve: 'basis',
+    nodeSpacing: 30,
+    rankSpacing: 40,
+    padding: 12
+  }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  const tabBar = document.getElementById('tabBar');
+  const tabBtns = tabBar.querySelectorAll('.tab-btn');
+  const tabContents = document.querySelectorAll('.tab-content');
+
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetId = 'tab-' + btn.dataset.tab;
+
+      tabBtns.forEach(b => b.classList.remove('active'));
+      tabContents.forEach(c => c.classList.remove('active'));
+
+      btn.classList.add('active');
+      document.getElementById(targetId).classList.add('active');
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  });
+});
+</script>
+</body>
+</html>
