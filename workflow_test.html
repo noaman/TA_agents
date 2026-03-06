@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Intgr8 – Workflow Chat</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script>
+    (function() {
+      // ========== CONFIGURATION ==========
+      var CONFIG = {
+    API_BASE_URL: "https://api.intgr8.ai",
+    WORKFLOW_ID: "3e9dfbc3-f110-4cd3-8647-e9bb38a33cab",
+    API_KEY: "_P_XRabj_g8CxSDSn9MCX9LGdicJgamQ6eG8YTe7RnI",
+    WORKFLOW_NAME: "Web Research",
+    WORKFLOW_USER_INPUT: [{"name": "topic", "value": "Your topic here"}],
+    PROMPT_ENHANCERS: [{"name": "research_objective", "value": "Research for an Industry whitepaper"}],
+    show_node_outputs: true,
+    show_settings_panel: true,
+    theme: "light",
+    poll_interval_ms: 3000,
+    timeout_ms: 600000
+  };
+
+      var workflowUserInputSchema = [];
+      var promptEnhancersFromConfig = [];
+
+      function escapeHtml(text) {
+        if (text == null) return '';
+        var div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+      function escapeAttr(s) {
+        if (s == null) return '';
+        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      }
+
+      function getApiBase() {
+        var base = (CONFIG.API_BASE_URL || '').trim();
+        return base ? base.replace(/\/$/, '') : '';
+      }
+
+      function useApiKeyAuth() {
+        return !!(CONFIG.API_KEY && CONFIG.API_KEY.trim());
+      }
+
+      function apiHeaders() {
+        var h = { 'Content-Type': 'application/json' };
+        if (useApiKeyAuth()) {
+          h['X-API-Key'] = CONFIG.API_KEY.trim();
+        } else {
+          var token = localStorage.getItem('access_token');
+          if (token) h['Authorization'] = 'Bearer ' + token;
+        }
+        return h;
+      }
+
+      function getExecutorId() {
+        return localStorage.getItem('user_id') || '';
+      }
+      function getExecutorEntity() {
+        return 'intgr8_web';
+      }
+
+      function getMessagesEl() { return document.getElementById('messages'); }
+      function getWelcomeEl() { return document.getElementById('welcome-state'); }
+      function scrollToBottom() {
+        var wrap = document.getElementById('messages-container');
+        if (wrap) wrap.scrollTop = wrap.scrollHeight;
+      }
+
+      function appendUserMessage(text) {
+        var w = getWelcomeEl(); if (w) w.style.display = 'none';
+        var m = getMessagesEl();
+        var div = document.createElement('div');
+        div.className = 'msg msg-user';
+        div.innerHTML = '<div class="bubble">' + escapeHtml(text) + '</div>';
+        m.appendChild(div);
+        scrollToBottom();
+      }
+
+      function showTypingIndicator() {
+        if (document.getElementById('typing-indicator')) return;
+        var w = getWelcomeEl(); if (w) w.style.display = 'none';
+        var div = document.createElement('div');
+        div.id = 'typing-indicator';
+        div.className = 'typing-indicator';
+        div.innerHTML = '<div class="msg-avatar"><i class="fas fa-project-diagram" style="font-size:0.65rem"></i></div><div class="typing-dots"><span></span><span></span><span></span></div>';
+        getMessagesEl().appendChild(div);
+        scrollToBottom();
+      }
+      function hideTypingIndicator() {
+        var el = document.getElementById('typing-indicator');
+        if (el) el.remove();
+      }
+
+      function applyMarkdownStyling(htmlStr) {
+        if (!htmlStr) return '';
+        var div = document.createElement('div');
+        div.innerHTML = htmlStr;
+        var tables = div.querySelectorAll('table');
+        tables.forEach(function(table) {
+          table.className = 'workflow-markdown-table';
+          var thead = table.querySelector('thead');
+          if (thead) thead.className = 'workflow-markdown-thead';
+          var ths = table.querySelectorAll('th');
+          ths.forEach(function(th) { th.className = 'workflow-markdown-th'; });
+          var tbody = table.querySelector('tbody');
+          if (tbody) {
+            var trs = tbody.querySelectorAll('tr');
+            trs.forEach(function(tr, i) {
+              tr.className = i % 2 === 0 ? 'workflow-markdown-tr-even' : 'workflow-markdown-tr-odd';
+            });
+            var tds = tbody.querySelectorAll('td');
+            tds.forEach(function(td) { td.className = 'workflow-markdown-td'; });
+          }
+        });
+        var pres = div.querySelectorAll('pre');
+        pres.forEach(function(pre) { pre.className = 'workflow-markdown-pre'; });
+        var codes = div.querySelectorAll('code');
+        codes.forEach(function(code) {
+          if (code.parentElement && code.parentElement.tagName === 'PRE') {
+            code.className = 'workflow-markdown-code-block';
+          } else {
+            code.className = 'workflow-markdown-code-inline';
+          }
+        });
+        var as = div.querySelectorAll('a');
+        as.forEach(function(a) {
+          a.setAttribute('target', '_blank');
+          a.setAttribute('rel', 'noopener noreferrer');
+          a.className = 'workflow-markdown-link';
+        });
+        return div.innerHTML;
+      }
+
+      function renderFinalContent(content, format) {
+        var normFormat = (format || 'markdown').toLowerCase();
+        if (typeof content === 'object' && content !== null && (content.image_url || content.thumbnail_url)) {
+          var imgUrl = content.image_url || content.thumbnail_url;
+          return '<div class="workflow-final-image"><img src="' + escapeAttr(imgUrl) + '" alt="Output" class="workflow-output-img"></div>';
+        }
+        if (typeof content === 'string') {
+          var trimmed = content.trim();
+          if (trimmed.indexOf('{') === 0 || trimmed.indexOf('[') === 0) {
+            try {
+              var parsedImg = JSON.parse(content);
+              if (parsedImg && typeof parsedImg === 'object' && (parsedImg.image_url || parsedImg.thumbnail_url)) {
+                var u = parsedImg.image_url || parsedImg.thumbnail_url;
+                return '<div class="workflow-final-image"><img src="' + escapeAttr(u) + '" alt="Output" class="workflow-output-img"></div>';
+              }
+            } catch (e) {}
+          }
+        }
+        var contentToRender = content;
+        if (typeof content === 'object' && content !== null) {
+          if (normFormat === 'markdown' || normFormat === 'text') {
+            contentToRender = JSON.stringify(content, null, 2);
+          }
+        }
+        switch (normFormat) {
+          case 'html':
+            if (typeof contentToRender === 'string') {
+              var t = contentToRender.trim();
+              if ((t.indexOf('[') === 0 && t.indexOf(']') === t.length - 1) || (t.indexOf('{') === 0 && t.indexOf('}') === t.length - 1)) {
+                try {
+                  var parsed = JSON.parse(t);
+                  return '<pre class="workflow-final-pre">' + escapeHtml(JSON.stringify(parsed, null, 2)) + '</pre>';
+                } catch (e) {}
+                return '<pre class="workflow-final-pre">' + escapeHtml(t) + '</pre>';
+              }
+              return '<div class="workflow-final-html max-w-none">' + t + '</div>';
+            }
+            break;
+          case 'json':
+            try {
+              var obj = typeof content === 'object' && content !== null ? content : JSON.parse(String(content));
+              return '<pre class="workflow-final-pre">' + escapeHtml(JSON.stringify(obj, null, 2)) + '</pre>';
+            } catch (e) {
+              return '<pre class="workflow-final-pre">' + escapeHtml(String(content)) + '</pre>';
+            }
+          case 'text':
+            return '<pre class="workflow-final-pre">' + escapeHtml(String(contentToRender)) + '</pre>';
+          case 'markdown':
+          default:
+            if (typeof marked !== 'undefined' && marked.parse) {
+              try {
+                marked.setOptions({ gfm: true, breaks: true, headerIds: false, mangle: false });
+                var rawHtml = marked.parse(String(contentToRender));
+                var styledHtml = applyMarkdownStyling(rawHtml);
+                return '<div class="chat-output-markdown">' + styledHtml + '</div>';
+              } catch (err) {
+                return '<pre class="workflow-final-pre">' + escapeHtml(String(contentToRender)) + '</pre>';
+              }
+            }
+            return '<pre class="workflow-final-pre">' + escapeHtml(String(contentToRender)) + '</pre>';
+        }
+        return '<pre class="workflow-final-pre">' + escapeHtml(String(content)) + '</pre>';
+      }
+
+      function buildNodeOutputsHtml(stepsOutput, durations) {
+        if (!CONFIG.show_node_outputs || !stepsOutput || Object.keys(stepsOutput).length === 0) return '';
+        var html = '<div class="workflow-node-outputs"><h4 class="workflow-node-outputs-title"><i class="fas fa-layer-group"></i> Node outputs</h4><div class="workflow-steps-accordion">';
+        Object.keys(stepsOutput).forEach(function(key) {
+          var value = stepsOutput[key];
+          var duration = durations && durations[key] != null ? durations[key].toFixed(2) + 's' : '—';
+          var valueStr = typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value);
+          html += '<details class="workflow-step-details" data-step-key="' + escapeAttr(key) + '">';
+          html += '<summary>' + escapeHtml(key) + ' <span class="workflow-step-duration">' + duration + '</span></summary>';
+          html += '<pre class="workflow-step-pre">' + escapeHtml(valueStr) + '</pre></details>';
+        });
+        html += '</div></div>';
+        return html;
+      }
+
+      function reenableSend() {
+        document.querySelectorAll('.btn-run-workflow, .btn-run-in-summary').forEach(function(btn) { btn.disabled = false; });
+      }
+
+      function buildWorkflowResponseHtml(output) {
+        var data = (output && (output.output_data || output.state)) || {};
+        var workingOutput = data.working_output || {};
+        var durations = data.durations || {};
+        var finalOutput = workingOutput.final_output != null ? workingOutput.final_output : data.final_output;
+        var stepsOutput = Object.assign({}, workingOutput);
+        delete stepsOutput.final_output;
+        var hasFinalOutput = finalOutput != null && finalOutput !== '' && !(Array.isArray(finalOutput) && finalOutput.length === 0);
+        var hasNodeOutputs = Object.keys(stepsOutput).length > 0;
+        var hasAny = hasNodeOutputs || hasFinalOutput;
+
+        var runningHtml = '';
+        if (!hasFinalOutput) {
+          runningHtml = '<div class="workflow-response-running"><i class="fas fa-spinner fa-spin"></i> Running workflow…</div>';
+        }
+
+        if (!hasAny) {
+          return runningHtml;
+        }
+
+        var nodeHtml = buildNodeOutputsHtml(stepsOutput, durations);
+        var finalHtml = '';
+        if (hasFinalOutput) {
+          var format = (output.final_output_format || 'markdown').toLowerCase();
+          var content = finalOutput;
+          if (typeof content === 'object' && content !== null && !Array.isArray(content)) {
+            content = content;
+          } else if (typeof content === 'string' && (content.trim().indexOf('{') === 0 || content.trim().indexOf('[') === 0)) {
+            try { content = JSON.parse(content); } catch (e) {}
+          }
+          finalHtml = '<div class="workflow-final-output-card">' +
+            '<h4 class="workflow-final-output-card-title"><i class="fas fa-flag-checkered"></i> Final output</h4>' +
+            '<div class="workflow-final-output">' + renderFinalContent(content, format) + '</div></div>';
+        }
+
+        return runningHtml + nodeHtml + finalHtml;
+      }
+
+      function addLiveWorkflowMessage() {
+        hideTypingIndicator();
+        var m = getMessagesEl();
+        var existing = document.getElementById('workflow-response-live');
+        if (existing) return;
+        var div = document.createElement('div');
+        div.id = 'workflow-response-live';
+        div.className = 'msg msg-assistant msg-workflow-response';
+        div.innerHTML =
+          '<div class="msg-avatar"><i class="fas fa-project-diagram" style="font-size:0.65rem"></i></div>' +
+          '<div class="bubble">' + buildWorkflowResponseHtml({}) + '</div>';
+        m.appendChild(div);
+        scrollToBottom();
+      }
+
+      function updateLiveWorkflowMessage(output) {
+        var el = document.getElementById('workflow-response-live');
+        if (!el) return;
+        var bubble = el.querySelector('.bubble');
+        if (bubble) bubble.innerHTML = buildWorkflowResponseHtml(output);
+        scrollToBottom();
+      }
+
+      function removeLiveWorkflowMessage() {
+        var el = document.getElementById('workflow-response-live');
+        if (el) el.remove();
+      }
+
+      function finalizeWorkflowResponse(output) {
+        var el = document.getElementById('workflow-response-live');
+        if (el) {
+          el.removeAttribute('id');
+          var bubble = el.querySelector('.bubble');
+          if (bubble) bubble.innerHTML = buildWorkflowResponseHtml(output);
+        }
+        hideTypingIndicator();
+        reenableSend();
+        scrollToBottom();
+      }
+
+      function appendWorkflowResponse(output) {
+        finalizeWorkflowResponse(output);
+      }
+
+      function appendErrorMessage(message) {
+        hideTypingIndicator();
+        reenableSend();
+        var m = getMessagesEl();
+        var div = document.createElement('div');
+        div.className = 'msg msg-assistant';
+        div.innerHTML =
+          '<div class="msg-avatar"><i class="fas fa-exclamation-triangle" style="font-size:0.65rem"></i></div>' +
+          '<div class="bubble workflow-error-bubble">' + escapeHtml(message) + '</div>';
+        m.appendChild(div);
+        scrollToBottom();
+      }
+
+      function executeWorkflow(userInputArray, promptEnhancers) {
+        var base = getApiBase();
+        var workflowId = (CONFIG.WORKFLOW_ID || '').trim();
+        if (!workflowId) {
+          appendErrorMessage('Workflow ID is not set. Configure it in Settings.');
+          return;
+        }
+
+        var executeUrl = base
+          ? base + '/api/v1/multi_agent_graphs_published/' + encodeURIComponent(workflowId) + '/execute'
+          : '/api/v1/multi_agent_graphs_published/' + encodeURIComponent(workflowId) + '/execute';
+
+        var body = {
+          executor_entity: useApiKeyAuth() ? 'api_call' : getExecutorEntity(),
+          user_input: userInputArray
+        };
+        if (!useApiKeyAuth()) {
+          body.executor_id = getExecutorId();
+        }
+        if (promptEnhancers && promptEnhancers.length > 0) {
+          body.prompt_enhancers = promptEnhancers;
+        }
+
+        var opts = { method: 'POST', headers: apiHeaders(), body: JSON.stringify(body) };
+        if (!useApiKeyAuth()) opts.credentials = 'include';
+
+        fetch(executeUrl, opts)
+          .then(function(r) {
+            if (!r.ok) return r.json().then(function(err) { return Promise.reject(new Error(err.detail || err.message || 'Execute failed')); });
+            return r.json();
+          })
+          .then(function(result) {
+            var outputId = result && (result.output_id || result.id || (result.output && (result.output.id || result.output.output_id)));
+            if (!outputId) {
+              appendErrorMessage('No output_id in response: ' + JSON.stringify(result));
+              return;
+            }
+            pollUntilComplete(outputId);
+          })
+          .catch(function(err) {
+            appendErrorMessage(err.message || 'Execution failed');
+          });
+      }
+
+      function pollUntilComplete(outputId) {
+        var base = getApiBase();
+        var getUrl = base
+          ? base + '/api/v1/multi_agent_graphs_published/outputs/' + encodeURIComponent(outputId)
+          : '/api/v1/multi_agent_graphs_published/outputs/' + encodeURIComponent(outputId);
+
+        var params = {};
+        if (!useApiKeyAuth()) {
+          params.executor_id = getExecutorId();
+          params.executor_entity = getExecutorEntity();
+        }
+        var query = Object.keys(params).length ? '?' + Object.keys(params).map(function(k) { return k + '=' + encodeURIComponent(params[k]); }).join('&') : '';
+
+        var started = Date.now();
+        var timeout = CONFIG.timeout_ms || 600000;
+        var pollInterval = CONFIG.poll_interval_ms || 3000;
+
+        addLiveWorkflowMessage();
+
+        function poll() {
+          if (Date.now() - started >= timeout) {
+            removeLiveWorkflowMessage();
+            appendErrorMessage('Timeout waiting for workflow completion');
+            return;
+          }
+          var opts = { method: 'GET', headers: apiHeaders() };
+          if (!useApiKeyAuth()) opts.credentials = 'include';
+          fetch(getUrl + query, opts)
+            .then(function(r) {
+              if (!r.ok) return r.json().then(function(err) { return Promise.reject(new Error(err.detail || err.message || 'Poll failed')); });
+              return r.json();
+            })
+            .then(function(output) {
+              updateLiveWorkflowMessage(output);
+              var status = output.status || 'unknown';
+              if (status === 'completed' && output.output_completed !== false) {
+                finalizeWorkflowResponse(output);
+                return;
+              }
+              if (status === 'failed' || status === 'error' || status === 'cancelled') {
+                removeLiveWorkflowMessage();
+                appendErrorMessage('Workflow ended: ' + status + ' – ' + (output.message || JSON.stringify(output)));
+                return;
+              }
+              setTimeout(poll, pollInterval);
+            })
+            .catch(function(err) {
+              removeLiveWorkflowMessage();
+              appendErrorMessage(err.message || 'Failed to get output');
+            });
+        }
+        poll();
+      }
+
+      function collectFormValues() {
+        var userInputArray = [];
+        document.querySelectorAll('#workflow-form [data-user-input-name]').forEach(function(el) {
+          var name = el.getAttribute('data-user-input-name');
+          if (name) userInputArray.push({ name: name, value: (el.value || '').trim() });
+        });
+        var promptEnhancers = [];
+        document.querySelectorAll('#workflow-form [data-prompt-enhancer-name]').forEach(function(el) {
+          var name = el.getAttribute('data-prompt-enhancer-name');
+          if (name) promptEnhancers.push({ name: name, value: (el.value || '').trim() });
+        });
+        return { userInputArray: userInputArray, promptEnhancers: promptEnhancers.length ? promptEnhancers : null };
+      }
+
+      function sendMessage() {
+        var payload = collectFormValues();
+        var userInputArray = payload.userInputArray;
+        var promptEnhancers = payload.promptEnhancers;
+
+        if (workflowUserInputSchema.length > 0 && userInputArray.length === 0) {
+          appendErrorMessage('Fill in at least one user input.');
+          return;
+        }
+        if (workflowUserInputSchema.length === 0 && !promptEnhancers && userInputArray.length === 0) {
+          appendErrorMessage('Configure WORKFLOW_USER_INPUT or PROMPT_ENHANCERS in CONFIG.');
+          return;
+        }
+        if (workflowUserInputSchema.length === 0 && userInputArray.length === 0) {
+          userInputArray = [{ name: 'query', value: 'Run' }];
+        }
+
+        var summary = userInputArray.length ? (userInputArray[0].value.slice(0, 80) + (userInputArray[0].value.length > 80 ? '…' : '')) : 'Run workflow';
+        appendUserMessage(summary);
+        showTypingIndicator();
+        collapseFormAccordion();
+        document.querySelectorAll('.btn-run-workflow, .btn-run-in-summary').forEach(function(btn) { btn.disabled = true; });
+
+        executeWorkflow(userInputArray, promptEnhancers);
+      }
+
+      function autoResizeTextarea(el) {
+        if (!el) return;
+        el.style.height = 'auto';
+        el.style.height = Math.min(el.scrollHeight, 150) + 'px';
+      }
+
+      function applyTheme(theme) {
+        document.body.setAttribute('data-theme', theme === 'light' ? 'light' : 'dark');
+        var btn = document.getElementById('btn-theme');
+        if (btn) btn.innerHTML = theme === 'light' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+      }
+
+      function toggleSettings() {
+        var panel = document.getElementById('settings-panel');
+        var backdrop = document.getElementById('settings-backdrop');
+        var btn = document.getElementById('btn-settings');
+        var isOpen = panel.classList.contains('open');
+        if (isOpen) {
+          panel.classList.remove('open');
+          backdrop.classList.remove('open');
+          btn.classList.remove('active');
+          syncConfigFromUI();
+        } else {
+          panel.classList.add('open');
+          backdrop.classList.add('open');
+          btn.classList.add('active');
+        }
+      }
+
+      function syncConfigFromUI() {
+        CONFIG.API_BASE_URL = (document.getElementById('cfg-api-url').value || '').trim();
+        CONFIG.WORKFLOW_ID = (document.getElementById('cfg-workflow-id').value || '').trim();
+        CONFIG.API_KEY = (document.getElementById('cfg-api-key').value || '').trim();
+        CONFIG.WORKFLOW_NAME = (document.getElementById('cfg-workflow-name').value || '').trim();
+        CONFIG.show_node_outputs = document.getElementById('cfg-show-node-outputs').checked;
+        CONFIG.show_settings_panel = document.getElementById('cfg-show-settings-panel').checked;
+        CONFIG.theme = document.getElementById('cfg-theme').checked ? 'light' : 'dark';
+        applyTheme(CONFIG.theme);
+        document.getElementById('header-workflow-name').textContent = CONFIG.WORKFLOW_NAME || 'Workflow Chat';
+        document.getElementById('welcome-heading').textContent = CONFIG.WORKFLOW_NAME ? 'Run ' + CONFIG.WORKFLOW_NAME : 'Send a message to run the workflow';
+        var settingsBtn = document.getElementById('btn-settings');
+        var themeBtn = document.getElementById('btn-theme');
+        if (settingsBtn) settingsBtn.style.display = CONFIG.show_settings_panel ? '' : 'none';
+        if (themeBtn) themeBtn.style.display = CONFIG.show_settings_panel ? '' : 'none';
+      }
+
+      function populateUIFromConfig() {
+        document.getElementById('cfg-api-url').value = CONFIG.API_BASE_URL || '';
+        document.getElementById('cfg-workflow-id').value = CONFIG.WORKFLOW_ID || '';
+        document.getElementById('cfg-api-key').value = CONFIG.API_KEY || '';
+        document.getElementById('cfg-workflow-name').value = CONFIG.WORKFLOW_NAME || '';
+        document.getElementById('cfg-theme').checked = CONFIG.theme === 'light';
+        document.getElementById('cfg-show-settings-panel').checked = CONFIG.show_settings_panel !== false;
+        document.getElementById('cfg-show-node-outputs').checked = CONFIG.show_node_outputs !== false;
+      }
+
+      function newChat() {
+        var m = getMessagesEl();
+        if (m) m.innerHTML = '';
+        var w = getWelcomeEl();
+        if (w) w.style.display = 'block';
+        document.querySelectorAll('.btn-run-workflow, .btn-run-in-summary').forEach(function(btn) { btn.disabled = false; });
+      }
+
+      function collapseFormAccordion() {
+        var accordion = document.getElementById('workflow-form-accordion');
+        if (accordion) accordion.removeAttribute('open');
+      }
+
+      function renderWorkflowForm() {
+        var wrap = document.getElementById('workflow-form-wrap');
+        if (!wrap) return;
+        var userInputs = workflowUserInputSchema;
+        var enhancers = promptEnhancersFromConfig;
+        var html = '<details id="workflow-form-accordion" class="workflow-form-accordion" open>';
+        html += '<summary class="workflow-form-accordion-summary"><span class="workflow-form-accordion-title"><i class="fas fa-chevron-down workflow-form-accordion-chevron"></i><i class="fas fa-cog"></i> Configure workflow</span><button type="button" id="btn-run-workflow" class="btn-run-workflow btn-run-in-summary"><i class="fas fa-play"></i> Run workflow</button></summary>';
+        html += '<div class="workflow-form-accordion-inner"><form id="workflow-form" class="workflow-form">';
+        if (userInputs.length > 0) {
+          html += '<details class="workflow-form-group-accordion" open><summary class="workflow-form-group-summary"><i class="fas fa-edit"></i> User inputs</summary><div class="workflow-form-group-content">';
+          userInputs.forEach(function(inp) {
+            var name = (inp.name || 'input').toString();
+            var val = (inp.value != null ? inp.value : '').toString();
+            var id = 'wf-user-' + name.replace(/[^a-z0-9]/gi, '_');
+            html += '<div class="workflow-form-field workflow-form-field-user">';
+            html += '<label class="workflow-form-label" for="' + escapeAttr(id) + '">' + escapeHtml(name) + '</label>';
+            html += '<textarea id="' + escapeAttr(id) + '" class="workflow-form-input workflow-form-textarea workflow-form-textarea-large" data-user-input-name="' + escapeAttr(name) + '" rows="6" placeholder="' + escapeAttr(name) + '">' + escapeHtml(val) + '</textarea>';
+            html += '</div>';
+          });
+          html += '</div></details>';
+        }
+        if (enhancers.length > 0) {
+          html += '<details class="workflow-form-group-accordion"><summary class="workflow-form-group-summary"><i class="fas fa-sliders-h"></i> Prompt enhancers</summary><div class="workflow-form-group-content">';
+          enhancers.forEach(function(pe) {
+            var name = (pe.name || 'enhancer').toString();
+            var val = (pe.value != null ? pe.value : '').toString();
+            var id = 'wf-pe-' + name.replace(/[^a-z0-9]/gi, '_');
+            var isLong = val.length > 100 || val.indexOf('\n') !== -1;
+            html += '<div class="workflow-form-field"><label class="workflow-form-label" for="' + escapeAttr(id) + '">' + escapeHtml(name) + '</label>';
+            if (isLong) {
+              html += '<textarea id="' + escapeAttr(id) + '" class="workflow-form-input workflow-form-textarea" data-prompt-enhancer-name="' + escapeAttr(name) + '" rows="4">' + escapeHtml(val) + '</textarea>';
+            } else {
+              html += '<input type="text" id="' + escapeAttr(id) + '" class="workflow-form-input" data-prompt-enhancer-name="' + escapeAttr(name) + '" value="' + escapeAttr(val) + '">';
+            }
+            html += '</div>';
+          });
+          html += '</div></details>';
+        }
+        html += '<div class="workflow-form-actions"><button type="submit" id="btn-run-workflow-bottom" class="btn-run-workflow"><i class="fas fa-play"></i> Run workflow</button></div></form></div></details>';
+        wrap.innerHTML = html;
+        var form = document.getElementById('workflow-form');
+        if (form) {
+          form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            sendMessage();
+          });
+        }
+        var btnTop = document.querySelector('#workflow-form-accordion .btn-run-in-summary');
+        if (btnTop) btnTop.addEventListener('click', function(e) { e.preventDefault(); e.stopPropagation(); sendMessage(); });
+      }
+
+      function init() {
+        workflowUserInputSchema = Array.isArray(CONFIG.WORKFLOW_USER_INPUT) ? CONFIG.WORKFLOW_USER_INPUT : [];
+        promptEnhancersFromConfig = Array.isArray(CONFIG.PROMPT_ENHANCERS) ? CONFIG.PROMPT_ENHANCERS : [];
+        applyTheme(CONFIG.theme);
+        populateUIFromConfig();
+        renderWorkflowForm();
+        document.getElementById('header-workflow-name').textContent = CONFIG.WORKFLOW_NAME || 'Workflow Chat';
+        document.getElementById('welcome-heading').textContent = CONFIG.WORKFLOW_NAME ? 'Run ' + CONFIG.WORKFLOW_NAME : 'Run workflow';
+        document.getElementById('welcome-desc').textContent = 'Edit the form below and click Run workflow. Node outputs and final result appear in the conversation.';
+        if (CONFIG.show_settings_panel === false) {
+          var settingsBtn = document.getElementById('btn-settings');
+          var themeBtn = document.getElementById('btn-theme');
+          if (settingsBtn) settingsBtn.style.display = 'none';
+          if (themeBtn) themeBtn.style.display = 'none';
+        }
+        document.getElementById('btn-theme').addEventListener('click', function() {
+          CONFIG.theme = CONFIG.theme === 'light' ? 'dark' : 'light';
+          applyTheme(CONFIG.theme);
+          document.getElementById('cfg-theme').checked = CONFIG.theme === 'light';
+        });
+        document.getElementById('btn-settings').addEventListener('click', toggleSettings);
+        document.getElementById('settings-backdrop').addEventListener('click', toggleSettings);
+        document.getElementById('btn-new-chat').addEventListener('click', newChat);
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+    })();
+  </script>
+
+  <style>
+    :root {
+      --bg-primary: #0a0a0a;
+      --bg-secondary: #141414;
+      --bg-tertiary: #1c1c1e;
+      --bg-elevated: #242426;
+      --bg-hover: #2c2c2e;
+      --border-primary: #2c2c2e;
+      --border-subtle: #1c1c1e;
+      --text-primary: #f5f5f7;
+      --text-secondary: #a1a1a6;
+      --text-tertiary: #6e6e73;
+      --accent: #6366f1;
+      --accent-hover: #818cf8;
+      --accent-muted: rgba(99, 102, 241, 0.12);
+      --user-bubble: #6366f1;
+      --user-bubble-text: #ffffff;
+      --assistant-bubble: #1c1c1e;
+      --assistant-bubble-text: #f5f5f7;
+      --success: #34d399;
+      --warning: #fbbf24;
+      --error: #f87171;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+      --shadow-md: 0 4px 16px rgba(0,0,0,0.4);
+      --shadow-lg: 0 12px 40px rgba(0,0,0,0.5);
+    }
+    body[data-theme="light"] {
+      --bg-primary: #f5f5f7;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f0f0f5;
+      --bg-elevated: #e8e8ed;
+      --bg-hover: #e2e2e8;
+      --border-primary: #d1d1d6;
+      --border-subtle: #e5e5ea;
+      --text-primary: #1c1c1e;
+      --text-secondary: #48484a;
+      --text-tertiary: #8e8e93;
+      --accent: #5558e3;
+      --accent-hover: #6366f1;
+      --accent-muted: rgba(85, 88, 227, 0.1);
+      --user-bubble: #5558e3;
+      --user-bubble-text: #ffffff;
+      --assistant-bubble: #f0f0f5;
+      --assistant-bubble-text: #1c1c1e;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.08);
+      --shadow-md: 0 4px 16px rgba(0,0,0,0.1);
+      --shadow-lg: 0 12px 40px rgba(0,0,0,0.15);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+    .app-layout { display: flex; flex-direction: column; height: 100vh; width: 100%; }
+    .app-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px; height: 56px;
+      background: var(--bg-secondary); border-bottom: 1px solid var(--border-primary);
+      flex-shrink: 0; z-index: 100;
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .header-logo {
+      width: 32px; height: 32px; border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, var(--accent), #a78bfa);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 0.85rem; font-weight: 700;
+    }
+    .header-title { font-weight: 600; font-size: 0.95rem; color: var(--text-primary); letter-spacing: -0.01em; }
+    .header-subtitle { font-size: 0.75rem; color: var(--text-tertiary); margin-left: 8px; font-weight: 400; }
+    .header-right { display: flex; align-items: center; gap: 4px; }
+    .header-btn {
+      width: 36px; height: 36px; border-radius: var(--radius-sm); border: none;
+      background: transparent; color: var(--text-secondary); cursor: pointer;
+      display: flex; align-items: center; justify-content: center; font-size: 0.9rem;
+      transition: all 0.15s ease;
+    }
+    .header-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .header-btn.active { background: var(--accent-muted); color: var(--accent); }
+
+    .settings-panel {
+      position: fixed; top: 56px; right: 0; width: 380px; max-width: 100vw;
+      height: calc(100vh - 56px); background: var(--bg-secondary);
+      border-left: 1px solid var(--border-primary); z-index: 90;
+      transform: translateX(100%); transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow-y: auto; padding: 24px;
+    }
+    .settings-panel.open { transform: translateX(0); }
+    .settings-title { font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-tertiary); margin-bottom: 16px; }
+    .settings-group { margin-bottom: 24px; }
+    .settings-field { margin-bottom: 12px; }
+    .settings-field label { display: block; font-size: 0.8rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; }
+    .settings-field input[type="text"], .settings-field textarea {
+      width: 100%; padding: 8px 12px; background: var(--bg-tertiary);
+      border: 1px solid var(--border-primary); border-radius: var(--radius-sm);
+      color: var(--text-primary); font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;
+      outline: none; transition: border-color 0.15s;
+    }
+    .settings-field input[type="text"]:focus, .settings-field textarea:focus { border-color: var(--accent); }
+    .settings-toggle { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border-subtle); }
+    .settings-toggle:last-child { border-bottom: none; }
+    .settings-toggle-label { font-size: 0.85rem; color: var(--text-primary); }
+    .settings-toggle-desc { font-size: 0.75rem; color: var(--text-tertiary); margin-top: 2px; }
+    .toggle-switch { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; inset: 0; background: var(--bg-hover); border-radius: 22px; cursor: pointer; transition: background 0.2s;
+    }
+    .toggle-slider::before {
+      content: ''; position: absolute; width: 16px; height: 16px; left: 3px; top: 3px;
+      background: var(--text-secondary); border-radius: 50%; transition: all 0.2s;
+    }
+    .toggle-switch input:checked + .toggle-slider { background: var(--accent); }
+    .toggle-switch input:checked + .toggle-slider::before { transform: translateX(18px); background: #fff; }
+
+    .chat-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; min-height: 0; }
+    .workflow-form-strip {
+      flex-shrink: 0; background: var(--bg-secondary); border-bottom: 1px solid var(--border-primary);
+      max-height: 65vh; overflow: hidden; display: flex; flex-direction: column;
+    }
+    .workflow-form-strip .input-wrapper { max-width: 760px; margin: 0 auto; width: 100%; padding: 12px 24px 16px; }
+    .workflow-form-accordion {
+      border: none; border-radius: var(--radius-lg); background: var(--bg-tertiary);
+      overflow: hidden;
+    }
+    .workflow-form-accordion[open] .workflow-form-accordion-inner {
+      max-height: 55vh; overflow-y: auto; padding: 0 4px 8px;
+    }
+    .workflow-form-accordion-summary {
+      list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 12px 16px; cursor: pointer; font-size: 0.9rem; font-weight: 500; color: var(--text-primary);
+      user-select: none; transition: background 0.15s;
+    }
+    .workflow-form-accordion-summary::-webkit-details-marker { display: none; }
+    .workflow-form-accordion-summary:hover { background: var(--bg-hover); }
+    .workflow-form-accordion-title { display: flex; align-items: center; gap: 8px; }
+    .workflow-form-accordion-chevron { font-size: 0.7rem; transition: transform 0.2s ease; }
+    .workflow-form-accordion[open] .workflow-form-accordion-chevron { transform: rotate(-180deg); }
+    .workflow-form-accordion-summary .btn-run-in-summary {
+      flex-shrink: 0; padding: 8px 16px; font-size: 0.85rem;
+    }
+    .workflow-form-group-accordion {
+      margin-bottom: 12px; border: 1px solid var(--border-primary); border-radius: var(--radius-md);
+      background: var(--bg-secondary); overflow: hidden;
+    }
+    .workflow-form-group-accordion:last-of-type { margin-bottom: 16px; }
+    .workflow-form-group-summary {
+      padding: 12px 16px; cursor: pointer; font-size: 0.85rem; font-weight: 500; color: var(--text-secondary);
+      list-style: none; display: flex; align-items: center; gap: 8px; transition: color 0.15s, background 0.15s;
+    }
+    .workflow-form-group-summary::-webkit-details-marker { display: none; }
+    .workflow-form-group-summary:hover { color: var(--text-primary); background: var(--bg-hover); }
+    .workflow-form-group-content { padding: 16px; border-top: 1px solid var(--border-subtle); }
+    .workflow-form { display: flex; flex-direction: column; gap: 0; }
+    .workflow-form-field {
+      margin-bottom: 16px; padding: 12px; border-radius: var(--radius-md); background: var(--bg-primary);
+      border: 1px solid var(--border-subtle);
+    }
+    .workflow-form-field:last-child { margin-bottom: 0; }
+    .workflow-form-field-user {
+      border-left: 3px solid var(--accent); padding-left: 14px;
+    }
+    .workflow-form-label {
+      display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-primary); margin-bottom: 8px;
+      text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .workflow-form-input {
+      width: 100%; padding: 12px 14px; background: var(--bg-tertiary); border: 1px solid var(--border-primary);
+      border-radius: var(--radius-sm); color: var(--text-primary); font-family: 'Inter', system-ui, sans-serif;
+      font-size: 0.9rem; outline: none; transition: border-color 0.15s; box-sizing: border-box;
+    }
+    .workflow-form-input:focus { border-color: var(--accent); }
+    .workflow-form-textarea { resize: vertical; min-height: 88px; line-height: 1.5; }
+    .workflow-form-textarea-large { min-height: 140px; font-size: 0.9rem; line-height: 1.55; }
+    .workflow-form-actions { padding: 12px 0 4px; }
+    .btn-run-workflow {
+      display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px;
+      background: var(--accent); color: #fff; border: none; border-radius: var(--radius-md);
+      font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: background 0.15s;
+    }
+    .btn-run-workflow:hover { background: var(--accent-hover); }
+    .btn-run-workflow:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .messages-container { flex: 1; min-height: 0; overflow-y: auto; padding: 24px 0; scroll-behavior: smooth; }
+    .messages-container::-webkit-scrollbar { width: 6px; }
+    .messages-container::-webkit-scrollbar-track { background: transparent; }
+    .messages-container::-webkit-scrollbar-thumb { background: var(--border-primary); border-radius: 3px; }
+    .messages-inner { max-width: 760px; margin: 0 auto; padding: 0 24px; }
+    .welcome-intro {
+      flex-shrink: 0; padding: 16px 24px; background: var(--bg-primary);
+      border-bottom: 1px solid var(--border-primary);
+    }
+    .welcome-intro .welcome-intro-inner {
+      max-width: 760px; margin: 0 auto;
+    }
+    .welcome-intro-heading {
+      font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin: 0 0 4px 0;
+      letter-spacing: -0.01em;
+    }
+    .welcome-intro-desc {
+      font-size: 0.875rem; color: var(--text-secondary); margin: 0; line-height: 1.45;
+    }
+
+    .msg { margin-bottom: 24px; animation: msgIn 0.25s ease; }
+    @keyframes msgIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .msg-user { display: flex; justify-content: flex-end; }
+    .msg-user .bubble {
+      background: var(--user-bubble); color: var(--user-bubble-text);
+      border-radius: var(--radius-lg) var(--radius-lg) 4px var(--radius-lg);
+      padding: 12px 16px; max-width: 75%; font-size: 0.9rem; line-height: 1.55; word-break: break-word;
+    }
+    .msg-assistant { display: flex; gap: 12px; align-items: flex-start; }
+    .msg-avatar {
+      width: 28px; height: 28px; border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, var(--accent), #a78bfa);
+      display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.7rem;
+      flex-shrink: 0; margin-top: 2px;
+    }
+    .msg-assistant .bubble {
+      background: transparent; color: var(--assistant-bubble-text); border-radius: var(--radius-lg);
+      padding: 0; max-width: 90%; font-size: 0.9rem; line-height: 1.65; word-break: break-word;
+    }
+    .msg-assistant.msg-workflow-response .bubble {
+      width: 100%; max-width: 100%;
+    }
+    .typing-indicator { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 24px; }
+    .typing-dots { display: flex; gap: 4px; padding: 14px 0; }
+    .typing-dots span { width: 7px; height: 7px; border-radius: 50%; background: var(--text-tertiary); animation: pulse 1.4s infinite both; }
+    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes pulse { 0%, 80%, 100% { opacity: 0.3; transform: scale(0.85); } 40% { opacity: 1; transform: scale(1); } }
+
+    .workflow-final-output-panel { margin-bottom: 12px; }
+    .workflow-detail-heading { font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; }
+    .workflow-final-output-card {
+      margin-top: 16px; padding: 20px; border-radius: var(--radius-lg);
+      background: #ffffff; color: #1c1c1e;
+      border: 1px solid var(--border-primary); box-shadow: var(--shadow-sm);
+    }
+    body[data-theme="light"] .workflow-final-output-card {
+      background: #ffffff; color: #1c1c1e; border-color: #e5e5ea;
+    }
+    .workflow-final-output-card-title {
+      font-size: 0.9rem; font-weight: 600; color: #374151; margin: 0 0 12px 0;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .workflow-final-output-card .workflow-final-output { font-size: 0.9rem; line-height: 1.6; color: #1c1c1e; }
+    .workflow-final-output-card .workflow-final-pre { background: #f3f4f6; color: #374151; border-color: #e5e7eb; }
+    .workflow-final-output-card .chat-output-markdown { color: #1c1c1e; }
+    .workflow-final-output-card .chat-output-markdown code { background: #e5e7eb; color: #4f46e5; }
+    .workflow-final-output-card .chat-output-markdown pre { background: #f3f4f6; border-color: #e5e7eb; }
+    .workflow-final-output { font-size: 0.9rem; line-height: 1.6; }
+    .workflow-final-pre { background: var(--bg-tertiary); padding: 14px; border-radius: var(--radius-sm); overflow-x: auto; font-size: 0.8rem; font-family: 'JetBrains Mono', monospace; margin: 8px 0; border: 1px solid var(--border-primary); color: var(--text-secondary); white-space: pre-wrap; word-break: break-word; }
+    .workflow-final-image { margin: 8px 0; }
+    .workflow-output-img { max-width: 100%; height: auto; border-radius: var(--radius-md); border: 1px solid var(--border-primary); }
+    .workflow-response-running {
+      display: flex; align-items: center; gap: 10px; padding: 12px 0;
+      font-size: 0.9rem; color: var(--text-secondary);
+    }
+    .workflow-response-running i { color: var(--accent); }
+    .workflow-error-bubble { color: var(--error); }
+    .workflow-node-outputs { margin-top: 16px; border-top: 1px solid var(--border-primary); padding-top: 12px; }
+    .workflow-node-outputs-title { font-size: 0.8rem; font-weight: 600; color: var(--text-tertiary); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+    .workflow-steps-accordion { display: flex; flex-direction: column; gap: 4px; }
+    .workflow-step-details { border: 1px solid var(--border-primary); border-radius: var(--radius-sm); overflow: hidden; background: var(--bg-secondary); }
+    .workflow-step-details summary { padding: 10px 14px; cursor: pointer; font-size: 0.82rem; font-weight: 500; color: var(--text-secondary); list-style: none; display: flex; align-items: center; justify-content: space-between; }
+    .workflow-step-details summary::-webkit-details-marker { display: none; }
+    .workflow-step-details summary:hover { color: var(--text-primary); }
+    .workflow-step-duration { font-size: 0.75rem; color: var(--text-tertiary); }
+    .workflow-step-pre { margin: 0; padding: 14px; font-size: 0.78rem; font-family: 'JetBrains Mono', monospace; overflow-x: auto; background: var(--bg-tertiary); border-top: 1px solid var(--border-primary); white-space: pre-wrap; word-break: break-word; color: var(--text-secondary); line-height: 1.5; }
+
+    .chat-output-markdown { font-size: 0.9rem; line-height: 1.65; color: var(--text-primary); }
+    .chat-output-markdown p { margin: 0 0 0.6em; }
+    .chat-output-markdown pre { background: var(--bg-tertiary); padding: 14px; border-radius: var(--radius-sm); overflow-x: auto; font-size: 0.8rem; font-family: 'JetBrains Mono', monospace; margin: 8px 0; border: 1px solid var(--border-primary); color: var(--text-secondary); }
+    .chat-output-markdown code { background: var(--bg-tertiary); padding: 2px 6px; border-radius: 4px; font-size: 0.83em; font-family: 'JetBrains Mono', monospace; color: var(--accent-hover); }
+    .chat-output-markdown pre code { background: none; padding: 0; color: inherit; }
+    .chat-output-markdown ul, .chat-output-markdown ol { margin: 0 0 0.6em; padding-left: 20px; }
+    .chat-output-markdown a { color: var(--accent-hover); text-decoration: none; }
+    .chat-output-markdown a:hover { text-decoration: underline; }
+    .chat-output-markdown blockquote { border-left: 3px solid var(--accent); padding-left: 14px; margin: 8px 0; color: var(--text-secondary); }
+
+    .workflow-form-wrap { width: 100%; }
+
+    .settings-notice { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; background: var(--accent-muted); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: var(--radius-md); margin-bottom: 24px; }
+    .settings-notice i { color: var(--accent); font-size: 0.8rem; margin-top: 2px; flex-shrink: 0; }
+    .settings-notice p { font-size: 0.78rem; color: var(--text-secondary); line-height: 1.5; }
+    .settings-notice code { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--accent-hover); background: rgba(99, 102, 241, 0.1); padding: 1px 5px; border-radius: 4px; }
+    .settings-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 85; }
+    .settings-backdrop.open { display: block; }
+    @media (max-width: 640px) {
+      .settings-panel { width: 100%; }
+      .messages-inner { padding: 0 16px; }
+      .welcome-intro { padding: 12px 16px; }
+      .workflow-form-strip .input-wrapper { padding: 10px 16px 12px; }
+      .app-header { padding: 0 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-layout">
+    <header class="app-header">
+      <div class="header-left">
+        <div class="header-logo"><i class="fas fa-project-diagram"></i></div>
+        <span class="header-title" id="header-workflow-name">Workflow Chat</span>
+        <span class="header-subtitle">intgr8</span>
+      </div>
+      <div class="header-right">
+        <button type="button" class="header-btn" id="btn-new-chat" title="New Chat"><i class="fas fa-plus"></i></button>
+        <button type="button" class="header-btn" id="btn-theme" title="Toggle theme"><i class="fas fa-moon"></i></button>
+        <button type="button" class="header-btn" id="btn-settings" title="Settings"><i class="fas fa-sliders-h"></i></button>
+      </div>
+    </header>
+
+    <div class="chat-area">
+      <div id="welcome-state" class="welcome-intro">
+        <div class="welcome-intro-inner">
+          <h2 class="welcome-intro-heading" id="welcome-heading">Run workflow</h2>
+          <p class="welcome-intro-desc" id="welcome-desc">Configure inputs below, then click Run workflow. Output appears in the conversation area.</p>
+        </div>
+      </div>
+      <div class="workflow-form-strip" id="workflow-form-strip">
+        <div class="input-wrapper">
+          <div id="workflow-form-wrap" class="workflow-form-wrap"></div>
+        </div>
+      </div>
+      <div class="messages-container" id="messages-container">
+        <div class="messages-inner" id="messages-inner">
+          <div id="messages"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="settings-backdrop" id="settings-backdrop"></div>
+  <aside class="settings-panel" id="settings-panel">
+    <div class="settings-notice">
+      <i class="fas fa-info-circle"></i>
+      <p>Use <strong>API Base URL</strong> + <strong>API Key</strong> for external API, or leave both empty to use the app proxy (logged-in session).</p>
+    </div>
+    <div class="settings-title">Configuration</div>
+    <div class="settings-group">
+      <div class="settings-field">
+        <label>API Base URL</label>
+        <input type="text" id="cfg-api-url" placeholder="e.g. http://localhost:9000 or leave empty for same-origin">
+      </div>
+      <div class="settings-field">
+        <label>Workflow ID (published)</label>
+        <input type="text" id="cfg-workflow-id" placeholder="Published workflow UUID">
+      </div>
+      <div class="settings-field">
+        <label>API Key (X-API-Key)</label>
+        <input type="text" id="cfg-api-key" placeholder="Leave empty to use app auth">
+      </div>
+      <div class="settings-field">
+        <label>Workflow Name</label>
+        <input type="text" id="cfg-workflow-name" placeholder="Display name">
+      </div>
+    </div>
+    <div class="settings-title">Display</div>
+    <div class="settings-group">
+      <div class="settings-toggle">
+        <div>
+          <div class="settings-toggle-label">Light Mode</div>
+          <div class="settings-toggle-desc">Switch between dark and light theme</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="cfg-theme">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="settings-toggle">
+        <div>
+          <div class="settings-toggle-label">Show Settings Panel</div>
+          <div class="settings-toggle-desc">Show gear icon in header</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="cfg-show-settings-panel" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="settings-toggle">
+        <div>
+          <div class="settings-toggle-label">Show Node Outputs</div>
+          <div class="settings-toggle-desc">Show per-step (node) outputs in each response</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="cfg-show-node-outputs" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+  </aside>
+</body>
+</html>
